@@ -1,9 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Map : MonoBehaviour
 {
+
+    private static Map instance;
+    public static Map Instance => instance;
+
     [SerializeField]
     private Vector2Int size;
 
@@ -13,6 +18,140 @@ public class Map : MonoBehaviour
 
     [SerializeField]
     private Node emptyNodePrefab;
+
+    [SerializeField]
+    private Mob mobPrefab;
+
+    public Structure placeStructurePrefab;
+
+    private Node mouseNode;
+
+    [SerializeField]
+    private Path path;
+    private Node start, end;
+
+    private Camera cam;
+
+    [SerializeField]
+    public float pathMaxDistance;
+
+    [SerializeField]
+    public int pathMaxTries;
+
+    public void Awake()
+    {
+        instance = this;
+        cam = Camera.main;
+
+        
+    }
+    public void Start()
+    {
+        Generate();
+        CenterCamera();
+
+        nodes[0, 0].mob = Instantiate(mobPrefab, transform);
+        nodes[0, 0].mob.Init(0, 0);
+    }
+
+    public void Update()
+    {
+        mouseNode = ScreenPointToRayPlaneNode(Input.mousePosition, 0, cam);
+
+
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
+        if (Input.GetMouseButtonDown(0) && mouseNode != null)
+        {
+            PlaceStructure(placeStructurePrefab, mouseNode.pos.x, mouseNode.pos.y, 0);
+        }
+
+
+        if (Input.GetMouseButtonDown(1) && mouseNode != null)
+        {
+            DeleteStructure(mouseNode.pos.x, mouseNode.pos.y);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            start = mouseNode;
+            path = PathFind(start, end, 1000, 1000, StandardCostFunction);
+            Debug.Log(path.result);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            end = mouseNode;
+            path = PathFind(start, end, 1000, 1000, StandardCostFunction);
+            Debug.Log(path.result);
+        }
+
+        
+    }
+    
+
+    public void Tick()
+    {
+
+
+        List<Mob> mobs = new List<Mob>();
+        List<Node> nodesWithMobs = new List<Node>();
+        foreach(Node node in nodes)
+        {
+            if (node.mob)
+            {
+                node.mob.moved = false;
+                node.mob.x = node.pos.x;
+                node.mob.y = node.pos.y;
+                mobs.Add(node.mob);
+                nodesWithMobs.Add(node);
+            }
+        }
+
+        foreach (Mob mob in mobs)
+            mob.DetermineTarget();
+
+        foreach (Node node in nodes)
+        {
+            if (node.mob && node.mob.Path.foundPath && node.mob.moving && !node.mob.moved)
+            {
+                Node next = node.mob.Path.path[1];
+                Mob mob = node.mob;
+                mob.moved = true;
+                next.mob = mob;
+                node.mob = null;
+                mob.x = next.pos.x;
+                mob.y = next.pos.y;
+                Debug.Log("Moving " + next.pos);
+                mob.transform.SetParent(next.transform, false);
+            }
+        }
+    }
+
+    public void InterTick(float t)
+    {
+        foreach (Node node in nodes)
+        {
+            if (!node.mob)
+                continue;
+
+            if (!node.mob.moving)
+                continue;
+
+            node.mob.angle = t * 90 - node.mob.angle;
+
+
+        }
+    }
+
+    [ContextMenu("Center Camera")]
+    public void CenterCamera()
+    {
+        Camera cam = Camera.main;
+        cam.transform.position = new Vector3(size.x / 2f, 0, size.y / 2f);
+        cam.transform.position -= cam.transform.forward * 80;
+    }
 
     public Node GetNode(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y ? null : nodes[x, y];
 
@@ -86,8 +225,6 @@ public class Map : MonoBehaviour
         }
         if (nodes != null)
         {
-
-
             for (int y = 0; y < nodes.GetLength(1); y++)
                 for (int x = 0; x < nodes.GetLength(0); x++)
                 {
@@ -171,7 +308,7 @@ public class Map : MonoBehaviour
 
         nodes[x, y].structure = Instantiate(prefab, nodes[x, y].transform);
         nodes[x, y].structure.rotation = rotation;
-        nodes[x, y].structure.transform.localPosition = Vector3.zero;
+        nodes[x, y].structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         nodes[x, y].structure.transform.localRotation = Quaternion.Euler(rotation * 90, 0, 0);
 
         return true;
@@ -234,7 +371,7 @@ public class Map : MonoBehaviour
         return true;
     }
 
-    public bool DeleteStructure(int x, int y, int rotation, bool sudo = false)
+    public bool DeleteStructure(int x, int y, bool sudo = false)
     {
         if (x < 0 || y < 0 || x >= size.x || y >= size.y)
             return false;
@@ -246,7 +383,7 @@ public class Map : MonoBehaviour
             return false;
 
         Destroy(nodes[x, y].structure.gameObject);
-        nodes[x, y] = null;
+        nodes[x, y].structure = null;
         return true;
     }
 
@@ -298,14 +435,20 @@ public class Map : MonoBehaviour
         return distance + cost + crowFliesDistance;
     }
 
+    public static float NoAdditionalsCostFunction(float distance, float cost, float crowFliesDistance, int steps)
+    {
+        return distance + crowFliesDistance;
+    }
+
     public enum PathResult
     {
         Success,
         FailureNoPath,
         FailureTooManyTries,
-        FailureTooFar
+        FailureTooFar,
     }
 
+    [System.Serializable]
     public struct Path
     {
         public bool foundPath;
@@ -328,6 +471,14 @@ public class Map : MonoBehaviour
         }
     }
 
+    public Path PathFind(Node start, Node end, float maxDistance, int maxTries, CostFunction costFunction)
+    {
+        if (start == null || end == null)
+            return new Path(PathResult.FailureNoPath);
+
+        return PathFind(start.pos.x, start.pos.y, end.pos.x, end.pos.y, maxDistance, maxTries, costFunction);
+    }
+
     public Path PathFind(int startX, int startY, int endX, int endY, float maxDistance, int maxTries)
     {
         return PathFind(startX, startY, endX, endY, maxDistance, maxTries, StandardCostFunction);
@@ -336,16 +487,22 @@ public class Map : MonoBehaviour
     public Path PathFind(int startX, int startY, int endX, int endY, float maxDistance, int maxTries, CostFunction costFunction)
     {
         float d = Distance(startX, startY, endX, endY);
-        if (d > maxDistance) return new Path();
 
-        List<Node> visited = new List<Node>();
-        List<Node> open = new List<Node>();
-        List<Node> closed = new List<Node>();
+        if (d > maxDistance) 
+            return new Path(PathResult.FailureTooFar);
 
         Node start = GetNode(startX, startY);
         Node end = GetNode(endX, endY);
 
+        if (start == null || end == null)
+            return new Path(PathResult.FailureNoPath);
 
+        if (start.IsImpassable || end.IsImpassable)
+            return new Path(PathResult.FailureNoPath);
+
+        List<Node> visited = new List<Node>();
+        List<Node> open = new List<Node>();
+        List<Node> closed = new List<Node>();
 
         start.pathDistance = 0;
         start.pathCrowFliesDistance = d;
@@ -355,6 +512,7 @@ public class Map : MonoBehaviour
         int tries = 0;
         while (true)
         {
+            //Debug.Log("Try #" + tries);
             tries++;
             if (tries > maxTries)
             {
@@ -416,6 +574,7 @@ public class Map : MonoBehaviour
                 Node neighbour = currentNode.neighbours[i];
 
                 if (neighbour == null) continue;
+                if (neighbour.IsImpassable) continue;
 
                 float distance = 1;//i % 2 == 0 ? 1 : ROOT_2;//currentNode.distances[i];
 
@@ -444,16 +603,20 @@ public class Map : MonoBehaviour
         Node current = end;
         while (current.pathParent != null)
         {
-            nodes.Add(current);
+            nodes.Insert(0, current);
+ //           nodes.Add(current);
             //this is backwards.
 
             current = current.pathParent;
         }
-        nodes.Add(start);
+        nodes.Insert(0, start);
+        //nodes.Add(start);
         //so is this.
 
         Path result = new Path
         {
+            result = PathResult.Success,
+            foundPath = true,
             path = nodes,
             pathDistance = end.pathDistance,
             pathCrowFliesDistance = end.pathCrowFliesDistance,
@@ -471,7 +634,7 @@ public class Map : MonoBehaviour
     {
         Vector3 intersection = ScreenPointToRayPlaneIntersection(screenPos, y, camera);
 
-        return GetNode(Mathf.FloorToInt(intersection.x), Mathf.FloorToInt(intersection.y));
+        return GetNode(Mathf.FloorToInt(intersection.x), Mathf.FloorToInt(intersection.z));
     }
 
     public static Vector3 ScreenPointToRayPlaneIntersection(Vector3 screenPos, float y, Camera camera)
@@ -483,4 +646,45 @@ public class Map : MonoBehaviour
         return hit;
     }
 
+
+    public void OnDrawGizmos()
+    {
+       
+        Vector3 mouse = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, Camera.main);
+
+        int tileX = Mathf.FloorToInt(mouse.x);
+        int tileZ = Mathf.FloorToInt(mouse.z);
+        Gizmos.color = Color.red;
+        DrawTile(tileX, tileZ);
+
+        if (start != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(new Vector3(start.pos.x + 0.5f, 0, start.pos.y + 0.5f), 0.25f);
+        }
+        if (end != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawSphere(new Vector3(end.pos.x + 0.5f, 0, end.pos.y + 0.5f), 0.25f);
+        }
+
+        if (path.foundPath)
+        {
+            Gizmos.color = Color.blue;
+            for (int i = 0; i < path.path.Count - 1; i++)
+            {
+                Node n0 = path.path[i];
+                Node n1 = path.path[i + 1];
+                Gizmos.DrawLine(new Vector3(n0.pos.x + 0.5f, 0, n0.pos.y + 0.5f), new Vector3(n1.pos.x + 0.5f, 0, n1.pos.y + 0.5f));
+            }
+        }
+    }
+
+    public static void DrawTile(int x, int z)
+    {
+        Gizmos.DrawLine(new Vector3(x, 0, z), new Vector3(x + 1, 0, z));
+        Gizmos.DrawLine(new Vector3(x + 1, 0, z), new Vector3(x + 1, 0, z + 1));
+        Gizmos.DrawLine(new Vector3(x + 1, 0, z + 1), new Vector3(x, 0, z + 1));
+        Gizmos.DrawLine(new Vector3(x, 0, z + 1), new Vector3(x, 0, z));
+    }
 }

@@ -1,12 +1,14 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class Node : MonoBehaviour
 {
     [HideInInspector]
     public Vector2Int pos;
-    [HideInInspector]
+    //[HideInInspector]
     public Node[] neighbours = new Node[4];
 
     [HideInInspector]
@@ -19,10 +21,15 @@ public class Node : MonoBehaviour
     [HideInInspector]
     public Node pathParent;
 
+    public Mob mob;
+
     public float Cost => structure == null ? 0 : structure.cost;
+
+    public bool IsImpassable => structure != null && structure.isImpassable;
 
     public void ClearPathFindingData()
     {
+        pathParent = null;
         pathDistance = 0;
         pathCost = 0;
         pathCrowFliesDistance = 0;
@@ -85,5 +92,10 @@ public class Node : MonoBehaviour
             WestNeighbour.EastNeighbour = null;
             WestNeighbour = null;
         }
+    }
+
+    public void Tick()
+    {
+
     }
 }
