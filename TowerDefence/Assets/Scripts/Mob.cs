@@ -10,9 +10,10 @@ public class Mob : MonoBehaviour
     public Map.Path Path { get; set; }
     public int Life { get => life; set => life = value; }
     public Node Target { get; private set; }
+    public Node Current { get; private set; }
 
     public Vector3 axis, pivot;
-    public int x, y, direction;
+    public int direction;
     public int nextX, nextY;
     public bool moving;
     public float angle;
@@ -43,10 +44,12 @@ public class Mob : MonoBehaviour
         return Mathf.Round(euler / 90) * 90;
     }
 
-    public virtual void DetermineTarget()
+    public void SetPosition(Node node)
     {
-        Target = Map.Instance.GetNode(12, 12);//TODO
+        Current = node;
         angle = 0;
+
+        transform.position = new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f);
 
         transform.localRotation = Quaternion.Euler
         (
@@ -55,11 +58,24 @@ public class Mob : MonoBehaviour
             SnapAngle(transform.localRotation.eulerAngles.z)
         );
 
-        
+    }
 
-        Node n0 = Map.Instance.GetNode(x, y);
+    public void GoToNext()
+    {
+        Current.mob = null;
+        Node next = Map.Instance.GetNode(nextX, nextY);
+        next.mob = this;
+        SetPosition(next);
+    }
 
-        Path = Map.Instance.PathFind(n0, Target, Map.Instance.pathMaxDistance, Map.Instance.pathMaxTries, CostFunction());
+    public virtual void DetermineTarget()
+    {
+        Target = Map.Instance.GetNode(7, 15);//TODO
+
+        int x = Current.pos.x;
+        int y = Current.pos.y;
+
+        Path = Map.Instance.PathFind(Current, Target, Map.Instance.pathMaxDistance, Map.Instance.pathMaxTries, CostFunction());
 
         if (!Path.foundPath || Path.path.Count <= 1)
         {
@@ -68,15 +84,16 @@ public class Mob : MonoBehaviour
         }
 
         Node n1 = Path.path[1];
-
-        moving = true;
-
+        
         if (n1.mob)
         {
             moving = false;
+            return;
         }
 
-        direction = DirectionFrom(n0, n1);
+        moving = true;
+
+        direction = DirectionFrom(Current, n1);
         nextX = x;
         nextY = y;
 
@@ -114,7 +131,8 @@ public class Mob : MonoBehaviour
 
     public void Init(int x, int y)
     {
-        transform.localPosition = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
+        transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
+        Current = Map.Instance.GetNode(x, y);
     }
 
     public void AnimateTo(int x, int y, int direction)

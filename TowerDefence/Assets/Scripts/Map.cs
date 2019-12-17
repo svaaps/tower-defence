@@ -50,8 +50,8 @@ public class Map : MonoBehaviour
         Generate();
         CenterCamera();
 
-        nodes[0, 0].mob = Instantiate(mobPrefab, transform);
-        nodes[0, 0].mob.Init(0, 0);
+        nodes[7, 0].mob = Instantiate(mobPrefab);
+        nodes[7, 0].mob.Init(7, 0);
     }
 
     public void Update()
@@ -93,38 +93,22 @@ public class Map : MonoBehaviour
 
     public void Tick()
     {
-
-
-        List<Mob> mobs = new List<Mob>();
-        List<Node> nodesWithMobs = new List<Node>();
-        foreach(Node node in nodes)
-        {
-            if (node.mob)
-            {
-                node.mob.moved = false;
-                node.mob.x = node.pos.x;
-                node.mob.y = node.pos.y;
-                mobs.Add(node.mob);
-                nodesWithMobs.Add(node);
-            }
-        }
-
-        foreach (Mob mob in mobs)
-            mob.DetermineTarget();
+        
 
         foreach (Node node in nodes)
         {
             if (node.mob && node.mob.Path.foundPath && node.mob.moving && !node.mob.moved)
             {
-                Node next = node.mob.Path.path[1];
-                Mob mob = node.mob;
-                mob.moved = true;
-                next.mob = mob;
-                node.mob = null;
-                mob.x = next.pos.x;
-                mob.y = next.pos.y;
-                Debug.Log("Moving " + next.pos);
-                mob.transform.SetParent(next.transform, false);
+                node.mob.GoToNext();
+            }
+        }
+        foreach (Node node in nodes)
+        {
+            if (node.mob)
+            {
+                node.mob.moved = false;
+                //node.mob.SetPosition(node);
+                node.mob.DetermineTarget();
             }
         }
     }
@@ -140,8 +124,9 @@ public class Map : MonoBehaviour
                 continue;
 
             node.mob.angle = t * 90 - node.mob.angle;
-
-
+            Vector3 lerp = Vector3.Lerp(new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), new Vector3(node.mob.nextX + 0.5f, 0.5f, node.mob.nextY + 0.5f), t);
+            Debug.Log(lerp);
+            node.mob.transform.position = lerp;
         }
     }
 
