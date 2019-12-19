@@ -11,16 +11,24 @@ public class Mob : MonoBehaviour
 
     private Rigidbody rb;
 
+    private float setDestinationCounter;
+
+    [SerializeField]
+    private float minimumRigidbodyVelocity = 2;
+
     public void Awake()
     {
         rb = GetComponent<Rigidbody>();
         agent = GetComponent<NavMeshAgent>();
+        setDestinationCounter = Random.value;
     }
 
     public void Update()
     {
         if (rb == null)
             rb = GetComponent<Rigidbody>();
+        
+        setDestinationCounter += Time.deltaTime;
 
         if (transform.position.y < -5)
         {
@@ -28,16 +36,28 @@ public class Mob : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
+        
         float magnitude = rb.velocity.magnitude;
-        if (magnitude < 1)
+        if (magnitude < minimumRigidbodyVelocity)
         {
-            rb.velocity = Vector3.zero;
+            //rb.velocity = Vector3.zero;
             agent.enabled = true;
-            if (Map.Instance.NearestBlock(transform.position, out nearestBlock))
-                agent.SetDestination(nearestBlock.transform.position);
-            else
-                agent.ResetPath();
+
+            float setDestinationInterval = 1f;
+            float minimumDestinationDistanceSq = 0.1f;
+
+            if (setDestinationCounter >= setDestinationInterval && Map.Instance.NearestBlock(transform.position, out nearestBlock))
+            {
+                if (!agent.hasPath || Map.SquareDistance(nearestBlock.transform.position, agent.destination) > minimumDestinationDistanceSq)
+                {
+                    agent.SetDestination(nearestBlock.transform.position);
+                    setDestinationCounter = 0;
+                }
+                else
+                {
+                    agent.ResetPath();
+                }
+            }
         }
         else
         {
@@ -48,7 +68,6 @@ public class Mob : MonoBehaviour
     public void AddForce(Vector3 force)
     {
         rb.AddForce(force, ForceMode.Impulse);
-        agent.enabled = false;
     }
 
     public void OnDeath()

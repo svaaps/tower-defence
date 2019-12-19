@@ -78,7 +78,7 @@ public class PathFinding : MonoBehaviour
         if (start == null || end == null)
             return new Path(PathResult.FailureNoPath);
 
-        if (start.IsImpassable || end.IsImpassable)
+        if (end.IsImpassable)
             return new Path(PathResult.FailureNoPath);
 
         float d = Distance(start.pos.x, start.pos.y, end.pos.x, end.pos.y);
@@ -214,12 +214,12 @@ public class PathFinding : MonoBehaviour
         if (start != null)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(new Vector3(start.pos.x + 0.5f, 0, start.pos.y + 0.5f), 0.25f);
+            Gizmos.DrawSphere(new Vector3(start.pos.x + 0.5f, 0, start.pos.y + 0.5f), 0.1f);
         }
         if (end != null)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(new Vector3(end.pos.x + 0.5f, 0, end.pos.y + 0.5f), 0.25f);
+            Gizmos.DrawSphere(new Vector3(end.pos.x + 0.5f, 0, end.pos.y + 0.5f), 0.1f);
         }
 
         if (path.FoundPath)

@@ -12,8 +12,6 @@ public class Projectile : MonoBehaviour
         FixedVelocityLob
     }
 
-    private Rigidbody rb;
-
     [SerializeField]
     private float life;
 
@@ -22,20 +20,25 @@ public class Projectile : MonoBehaviour
 
     [SerializeField]
     private float velocity;
+
     [SerializeField]
     private float pitch;
+
     [SerializeField]
     private LayerMask explosionMask;
+
     [SerializeField]
     private ParticleSystem explosionParticleSystem;
+
     [SerializeField]
     private float explosionForce;
+
     [SerializeField]
     private float explosionRange;
 
+    private Rigidbody rb;
     private Vector3 target;
     private bool hit;
-
 
     public void Awake()
     {

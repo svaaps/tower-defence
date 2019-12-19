@@ -20,9 +20,6 @@ public class Map : MonoBehaviour
     [SerializeField]
     private Node emptyNodePrefab;
 
-    [SerializeField]
-    private Block blockPrefab;
-
     private Camera cam;
     public Vector3 MousePlane { get; private set; }
     public Node MouseNode { get; private set; }
@@ -33,42 +30,43 @@ public class Map : MonoBehaviour
         instance = this;
         cam = Camera.main;
     }
-
     public void Start()
     {
         Generate();
         BakeNavMesh();
         CenterCamera();
-
-        nodes[7, 0].block = Instantiate(blockPrefab);
-        nodes[7, 0].block.Init(7, 0);
     }
+
+
 
     public void Update()
     {
-
         MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
         MouseNode = GetNode(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
-
-        
     }
 
     public void Tick()
     {
-        foreach (Node node in nodes)
+        foreach(Node node in nodes)
         {
-            if (node.block && node.block.Path.FoundPath && node.block.moving && !node.block.moved)
-            {
-                node.block.GoToNext();
-            }
+            if (node.structure != null)
+                node.structure.Tick();
         }
         foreach (Node node in nodes)
         {
             if (node.block)
             {
                 node.block.moved = false;
-                //node.mob.SetPosition(node);
+            }
+        }
+
+        foreach (Node node in nodes)
+        {
+            if (node.block && !node.block.moved)
+            {
                 node.block.RecalculatePath();
+                if (node.block.Path.FoundPath && node.block.moving)
+                    node.block.GoToNext();
             }
         }
     }
@@ -84,7 +82,7 @@ public class Map : MonoBehaviour
                 continue;
 
             node.block.angle = t * 90 - node.block.angle;
-            Vector3 lerp = Vector3.Lerp(new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), new Vector3(node.block.nextX + 0.5f, 0.5f, node.block.nextY + 0.5f), t);
+            Vector3 lerp = Vector3.Lerp(new Vector3(node.block.prevX + 0.5f, 0.5f, node.block.prevY + 0.5f), new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), t);
             node.block.transform.position = lerp;
         }
     }
@@ -112,7 +110,21 @@ public class Map : MonoBehaviour
     {
         Camera cam = Camera.main;
         cam.transform.position = new Vector3(size.x / 2f, 0, size.y / 2f);
-        cam.transform.position -= cam.transform.forward * 80;
+        cam.transform.position -= cam.transform.forward * 20;
+    }
+
+    public bool AddBlock(Block prefab, int x, int y)
+    {
+        if (x < 0 || y < 0 || x >= size.x || y >= size.y)
+            return false;
+
+        if (nodes[x, y].block != null)
+            return false;
+
+        nodes[x, y].block = Instantiate(prefab);
+        nodes[x, y].block.Init(x, y);
+        
+        return true;
     }
 
     public Node GetNode(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y ? null : nodes[x, y];
@@ -274,10 +286,11 @@ public class Map : MonoBehaviour
             return true;
 
         nodes[x, y].structure = Instantiate(prefab, nodes[x, y].transform);
+        nodes[x, y].structure.node = nodes[x, y];
         nodes[x, y].structure.rotation = rotation;
         nodes[x, y].structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         nodes[x, y].structure.transform.localRotation = Quaternion.Euler(rotation * 90, 0, 0);
-        BakeNavMesh();
+        //BakeNavMesh();
         return true;
     }
 

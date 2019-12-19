@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   life: 5
-  pathMaxTries: 100
+  pathMaxTries: 200
   pathMaxDistance: 100
 --- !u!1 &2333207619548986756
 GameObject:

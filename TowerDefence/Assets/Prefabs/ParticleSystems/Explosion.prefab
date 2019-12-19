@@ -44,7 +44,7 @@ ParticleSystem:
   m_GameObject: {fileID: 5515505448584185528}
   serializedVersion: 6
   lengthInSec: 3
-  simulationSpeed: 1
+  simulationSpeed: 1.5
   stopAction: 2
   cullingMode: 0
   ringBufferMode: 0
@@ -118,7 +118,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.75
+      scalar: 0.5
       minScalar: 0.25
       maxCurve:
         serializedVersion: 2
@@ -171,7 +171,7 @@ ParticleSystem:
     startSpeed:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 10
+      scalar: 8
       minScalar: 5
       maxCurve:
         serializedVersion: 2
@@ -287,7 +287,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 1.5
+      scalar: 2
       minScalar: 0.5
       maxCurve:
         serializedVersion: 2
@@ -3832,17 +3832,17 @@ ParticleSystem:
       properties: 0
       emitProbability: 1
   LightsModule:
-    enabled: 0
-    ratio: 0
-    light: {fileID: 0}
+    enabled: 1
+    ratio: 1
+    light: {fileID: 7502526389850942046, guid: 2f6e44977e5e4954c855add9c60833b9, type: 3}
     randomDistribution: 1
-    color: 1
+    color: 0
     range: 1
     intensity: 1
     rangeCurve:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1
+      scalar: 5
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -3895,7 +3895,7 @@ ParticleSystem:
     intensityCurve:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1
+      scalar: 5
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -3945,7 +3945,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
-    maxLights: 20
+    maxLights: 1
   TrailModule:
     enabled: 0
     mode: 0
@@ -4910,6 +4910,26 @@ PrefabInstance:
       propertyPath: InitialModule.gravityModifier.scalar
       value: 0.25
       objectReference: {fileID: 0}
+    - target: {fileID: 5552998445570033697, guid: fd66f4edd3ce15c41bb6903ff76211f5,
+        type: 3}
+      propertyPath: InitialModule.startSize.scalar
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5552998445570033697, guid: fd66f4edd3ce15c41bb6903ff76211f5,
+        type: 3}
+      propertyPath: InitialModule.startSpeed.minScalar
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5552998445570033697, guid: fd66f4edd3ce15c41bb6903ff76211f5,
+        type: 3}
+      propertyPath: InitialModule.startSpeed.scalar
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5552998445570033697, guid: fd66f4edd3ce15c41bb6903ff76211f5,
+        type: 3}
+      propertyPath: simulationSpeed
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fd66f4edd3ce15c41bb6903ff76211f5, type: 3}
 --- !u!4 &6505210257513883687 stripped
@@ -5078,12 +5098,32 @@ PrefabInstance:
     - target: {fileID: 6047012412956822924, guid: eb500aa8517fbdb46bc047a053165fc0,
         type: 3}
       propertyPath: InitialModule.startSize.minScalar
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6047012412956822924, guid: eb500aa8517fbdb46bc047a053165fc0,
         type: 3}
       propertyPath: InitialModule.startSize.scalar
-      value: 4
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6047012412956822924, guid: eb500aa8517fbdb46bc047a053165fc0,
+        type: 3}
+      propertyPath: SizeModule.curve.maxCurve.m_Curve.Array.data[0].inSlope
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6047012412956822924, guid: eb500aa8517fbdb46bc047a053165fc0,
+        type: 3}
+      propertyPath: SizeModule.curve.maxCurve.m_Curve.Array.data[0].outSlope
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6047012412956822924, guid: eb500aa8517fbdb46bc047a053165fc0,
+        type: 3}
+      propertyPath: SizeModule.curve.maxCurve.m_Curve.Array.data[1].inSlope
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6047012412956822924, guid: eb500aa8517fbdb46bc047a053165fc0,
+        type: 3}
+      propertyPath: SizeModule.curve.maxCurve.m_Curve.Array.data[1].outSlope
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8085259097531876168, guid: eb500aa8517fbdb46bc047a053165fc0,
         type: 3}

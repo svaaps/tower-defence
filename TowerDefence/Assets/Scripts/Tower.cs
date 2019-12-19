@@ -11,16 +11,16 @@ public class Tower : Structure
     private Projectile projectilePrefab;
 
     [SerializeField]
-    private float fireRate;
+    private int fireInterval;
 
-    private float fireCounter;
+    private int fireCounter;
 
     private Mob target;
 
     [SerializeField]
     private float range;
 
-    public void Update()
+    public override void Tick()
     {
         if (target != null && Map.SquareDistance(transform.position, target.transform.position) > range * range)
             target = null;
@@ -32,23 +32,12 @@ public class Tower : Structure
                 target = null;
         }
 
-       
-
-
         if (target != null)
+            fireCounter++;
+
+        if (fireCounter >= fireInterval && target != null)
         {
-            //Rotate to face the target.
-        }
-
-        if (fireRate <= 0)
-            return;
-
-        float fireInterval = 1f / fireRate;
-        fireCounter += Time.deltaTime;
-
-        while(fireCounter >= fireInterval && target != null)
-        {
-            fireCounter -= fireInterval;
+            fireCounter = 0;
             if (target != null)
                 Fire(target.transform.position);
         }

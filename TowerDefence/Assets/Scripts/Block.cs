@@ -23,9 +23,16 @@ public class Block : MonoBehaviour
     public int direction { get; set; }
     public int nextX { get; set; }
     public int nextY { get; set; }
+    public int prevX { get; set; }
+    public int prevY { get; set; }
     public bool moving { get; set; }
     public float angle { get; set; }
     public bool moved { get; set; }
+
+    public void Start()
+    {
+        Target = Map.Instance.GetNode(7, 15);//TODO
+    }
 
     public void Update()
     {
@@ -62,8 +69,18 @@ public class Block : MonoBehaviour
     {
         Current = node;
         angle = 0;
+    }
 
-        transform.position = new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f);
+    public void GoToNext()
+    {
+        Node next = Map.Instance.GetNode(nextX, nextY);
+        if (next.block != null)
+            return;
+
+        prevX = Current.pos.x;
+        prevY = Current.pos.y;
+
+        transform.position = new Vector3(prevX + 0.5f, 0.5f, prevY + 0.5f);
 
         transform.localRotation = Quaternion.Euler
         (
@@ -71,12 +88,9 @@ public class Block : MonoBehaviour
             SnapAngle(transform.localRotation.eulerAngles.y),
             SnapAngle(transform.localRotation.eulerAngles.z)
         );
-    }
 
-    public void GoToNext()
-    {
+        moved = true;
         Current.block = null;
-        Node next = Map.Instance.GetNode(nextX, nextY);
         next.block = this;
         SetPosition(next);
     }
@@ -150,6 +164,8 @@ public class Block : MonoBehaviour
     {
         transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
         Current = Map.Instance.GetNode(x, y);
+        prevX = x;
+        prevY = y;
     }
 
     public void AnimateTo(int x, int y, int direction)
