@@ -22,6 +22,13 @@ public class Mob : MonoBehaviour
         if (rb == null)
             rb = GetComponent<Rigidbody>();
 
+        if (transform.position.y < -5)
+        {
+            OnDeath();
+            Destroy(gameObject);
+            return;
+        }
+
         float magnitude = rb.velocity.magnitude;
         if (magnitude < 1)
         {
@@ -40,7 +47,12 @@ public class Mob : MonoBehaviour
 
     public void AddForce(Vector3 force)
     {
-        rb.AddForce(force, ForceMode.VelocityChange);
+        rb.AddForce(force, ForceMode.Impulse);
         agent.enabled = false;
+    }
+
+    public void OnDeath()
+    {
+        Game.Instance.RemoveMob(this);
     }
 }

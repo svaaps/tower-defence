@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6193856003340821942}
   - component: {fileID: 3518019128727132978}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Block
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,14 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   life: 5
-  axis: {x: 0, y: 0, z: 0}
-  pivot: {x: 0, y: 0, z: 0}
-  direction: 0
-  nextX: 0
-  nextY: 0
-  moving: 0
-  angle: 0
-  moved: 0
+  pathMaxTries: 100
+  pathMaxDistance: 100
 --- !u!1 &2333207619548986756
 GameObject:
   m_ObjectHideFlags: 0
@@ -66,7 +60,7 @@ GameObject:
   - component: {fileID: 1673660740057498593}
   - component: {fileID: 316366606891831976}
   - component: {fileID: 2995338152210105851}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

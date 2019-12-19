@@ -22222,20 +22222,6 @@ MonoBehaviour:
     type: 3}
   blockPrefab: {fileID: 3518019128727132978, guid: 2fff2b4b45fd8444c92ff4291b9ff00d,
     type: 3}
-  mobPrefab: {fileID: 1997651016698371908, guid: c7916ec9c0031164193555accee780e6,
-    type: 3}
-  placeStructurePrefab: {fileID: 6601605855188900738, guid: 088aa19cf5fb30942b48b202fdf2835c,
-    type: 3}
-  path:
-    foundPath: 0
-    result: 0
-    path: []
-    pathDistance: 0
-    pathCost: 0
-    pathCrowFliesDistance: 0
-    pathSteps: 0
-  pathMaxDistance: 1000
-  pathMaxTries: 1000
   navMeshBuildSettings:
     agentRadius: 0.1
     agentHeight: 1
@@ -22526,6 +22512,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tickInterval: 1
+  mobPrefab: {fileID: 1997651016698371908, guid: c7916ec9c0031164193555accee780e6,
+    type: 3}
 --- !u!1001 &1457333776
 PrefabInstance:
   m_ObjectHideFlags: 0

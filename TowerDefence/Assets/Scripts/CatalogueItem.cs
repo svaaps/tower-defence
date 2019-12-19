@@ -25,6 +25,6 @@ public class CatalogueItem : MonoBehaviour
 
     public void Pressed()
     {
-        Map.Instance.placeStructurePrefab = StructurePrefab;
+        Catalogue.Instance.PlaceStructurePrefab = StructurePrefab;
     }
 }

@@ -23,14 +23,19 @@ public class Projectile : MonoBehaviour
     [SerializeField]
     private float velocity;
     [SerializeField]
-    private float gravity;
-    [SerializeField]
     private float pitch;
+    [SerializeField]
+    private LayerMask explosionMask;
+    [SerializeField]
+    private ParticleSystem explosionParticleSystem;
+    [SerializeField]
+    private float explosionForce;
+    [SerializeField]
+    private float explosionRange;
+
     private Vector3 target;
     private bool hit;
 
-    [SerializeField]
-    private LayerMask explodesOn;
 
     public void Awake()
     {
@@ -58,7 +63,9 @@ public class Projectile : MonoBehaviour
 
     public virtual void OnHit()
     {
-        Map.Instance.AddForce(transform.position, 50, 10);
+        Game.Instance.AddForce(transform.position, explosionForce, explosionRange);
+        if (explosionParticleSystem)
+            Instantiate(explosionParticleSystem, transform.position, Quaternion.identity);
     }
 
     public bool Fire(Vector3 target)
@@ -81,7 +88,7 @@ public class Projectile : MonoBehaviour
         else
         {
             rb.useGravity = true;
-            int sav = Ballistics.SolveArcVector(transform.position, velocity, target, gravity, out Vector3 s0, out Vector3 s1);
+            int sav = Ballistics.SolveArcVector(transform.position, velocity, target, -Physics.gravity.y, out Vector3 s0, out Vector3 s1);
             if (sav == 1)
             {
                 rb.velocity = s0;
@@ -111,17 +118,12 @@ public class Projectile : MonoBehaviour
     {
         if (hit)
             return;
-        bool inMask = explodesOn == (explodesOn | (1 << collision.gameObject.layer));
+        bool inMask = explosionMask == (explosionMask | (1 << collision.gameObject.layer));
         if (inMask)
         {
             hit = true;
             OnHit();
             Destroy(gameObject);
         }
-    }
-
-    public void ExplosiveForce(float force, float range)
-    {
-        Map.Instance.AddForce(transform.position, force, range);
     }
 }

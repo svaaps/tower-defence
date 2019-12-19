@@ -25,9 +25,15 @@ public class Tower : Structure
         if (target != null && Map.SquareDistance(transform.position, target.transform.position) > range * range)
             target = null;
 
-
         if (target == null)
-            target = Map.Instance.ClosestMob(transform.position);
+        {
+            target = Game.Instance.ClosestMob(transform.position);
+            if (target != null && Map.SquareDistance(transform.position, target.transform.position) > range * range)
+                target = null;
+        }
+
+       
+
 
         if (target != null)
         {

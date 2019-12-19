@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3176537246960174838}
   - component: {fileID: 6601605855188900738}
-  m_Layer: 0
-  m_Name: Block
+  m_Layer: 11
+  m_Name: Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -65,7 +65,7 @@ GameObject:
   - component: {fileID: 1780905377689484806}
   - component: {fileID: 116986490518575170}
   - component: {fileID: 4944415294652061769}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

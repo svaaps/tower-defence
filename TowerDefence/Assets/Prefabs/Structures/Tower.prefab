@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6444177388968037742}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: ProjectileStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 6976001080679378638}
   - component: {fileID: 8784040807163234442}
   - component: {fileID: 8937596342817263675}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -146,7 +146,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6083769150612362814}
   - component: {fileID: 2293182688855539171}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -193,3 +193,4 @@ MonoBehaviour:
   projectilePrefab: {fileID: 3761401048581705549, guid: f894b064da65c834f9ceea4fff741815,
     type: 3}
   fireRate: 1
+  range: 12

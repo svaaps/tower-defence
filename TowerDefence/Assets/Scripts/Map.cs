@@ -10,14 +10,12 @@ public class Map : MonoBehaviour
     private static Map instance;
     public static Map Instance => instance;
 
-    [SerializeField]
-    private Vector2Int size;
-
     private Wall[,] verticalWalls;
     private Wall[,] horizontalWalls;
     private Node[,] nodes;
 
-    private List<Mob> mobs = new List<Mob>();
+    [SerializeField]
+    private Vector2Int size;
 
     [SerializeField]
     private Node emptyNodePrefab;
@@ -25,28 +23,10 @@ public class Map : MonoBehaviour
     [SerializeField]
     private Block blockPrefab;
 
-    [SerializeField]
-    private Mob mobPrefab;
-
-    public Structure placeStructurePrefab;
-
-    private Vector3 mousePlane;
-
-    private Node mouseNode;
-
-    [SerializeField]
-    private Path path;
-    private Node start, end;
-
     private Camera cam;
-
-    [SerializeField]
-    public float pathMaxDistance;
-
-    [SerializeField]
-    public int pathMaxTries;
-
-    public Node MouseNode => mouseNode;
+    public Vector3 MousePlane { get; private set; }
+    public Node MouseNode { get; private set; }
+    public Vector2Int Size => size;
 
     public void Awake()
     {
@@ -62,52 +42,22 @@ public class Map : MonoBehaviour
 
         nodes[7, 0].block = Instantiate(blockPrefab);
         nodes[7, 0].block.Init(7, 0);
-
-        for (int i = 0; i < 10; i++)
-            AddMob(mobPrefab, new Vector3(Random.Range(0, size.x), 0, Random.Range(0, size.y)));
     }
 
     public void Update()
     {
 
-        mousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
-        mouseNode = GetNode(Mathf.FloorToInt(mousePlane.x), Mathf.FloorToInt(mousePlane.z));
+        MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
+        MouseNode = GetNode(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
 
-        if (EventSystem.current.IsPointerOverGameObject())
-        {
-            return;
-        }
-
-        if (Input.GetMouseButtonDown(0) && mouseNode != null)
-        {
-            PlaceStructure(placeStructurePrefab, mouseNode.pos.x, mouseNode.pos.y, 0);
-        }
-
-        if (Input.GetMouseButtonDown(1) && mouseNode != null)
-        {
-            DeleteStructure(mouseNode.pos.x, mouseNode.pos.y);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            start = mouseNode;
-            path = PathFind(start, end, 1000, 1000, StandardCostFunction);
-            Debug.Log(path.result);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            end = mouseNode;
-            path = PathFind(start, end, 1000, 1000, StandardCostFunction);
-            Debug.Log(path.result);
-        }
+        
     }
 
     public void Tick()
     {
         foreach (Node node in nodes)
         {
-            if (node.block && node.block.Path.foundPath && node.block.moving && !node.block.moved)
+            if (node.block && node.block.Path.FoundPath && node.block.moving && !node.block.moved)
             {
                 node.block.GoToNext();
             }
@@ -118,36 +68,25 @@ public class Map : MonoBehaviour
             {
                 node.block.moved = false;
                 //node.mob.SetPosition(node);
-                node.block.DetermineTarget();
+                node.block.RecalculatePath();
             }
         }
     }
 
-    public Mob ClosestMob(Vector3 position)
+    public void InterTick(float t)
     {
-        Mob closest = null;
-        float sqDistance = float.MaxValue;
-        foreach(Mob mob in mobs)
+        foreach (Node node in nodes)
         {
-            float d = SquareDistance(position, mob.transform.position);
-            if (closest == null || sqDistance < d)
-            {
-                closest = mob;
-                sqDistance = d;
-            }
+            if (!node.block)
+                continue;
+
+            if (!node.block.moving)
+                continue;
+
+            node.block.angle = t * 90 - node.block.angle;
+            Vector3 lerp = Vector3.Lerp(new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), new Vector3(node.block.nextX + 0.5f, 0.5f, node.block.nextY + 0.5f), t);
+            node.block.transform.position = lerp;
         }
-        return closest;
-    }
-
-    public List<Mob> MobsInRange(Vector3 position, float range)
-    {
-        List<Mob> inRange = new List<Mob>();
-
-        foreach(Mob mob in mobs)
-            if (SquareDistance(position, mob.transform.position) <= range * range)
-                inRange.Add(mob);
-
-        return inRange;
     }
 
     public bool NearestBlock(Vector3 position, out Block nearest)
@@ -168,22 +107,6 @@ public class Map : MonoBehaviour
         return nearest;
     }
 
-    public void InterTick(float t)
-    {
-        foreach (Node node in nodes)
-        {
-            if (!node.block)
-                continue;
-
-            if (!node.block.moving)
-                continue;
-
-            node.block.angle = t * 90 - node.block.angle;
-            Vector3 lerp = Vector3.Lerp(new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), new Vector3(node.block.nextX + 0.5f, 0.5f, node.block.nextY + 0.5f), t);
-            node.block.transform.position = lerp;
-        }
-    }
-
     [ContextMenu("Center Camera")]
     public void CenterCamera()
     {
@@ -193,7 +116,6 @@ public class Map : MonoBehaviour
     }
 
     public Node GetNode(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y ? null : nodes[x, y];
-
     public Wall GetWall(int x, int y, bool vertical) => x < 0 || y < 0 || x >= size.x + 1 || y >= size.y + 1 ? null : vertical ? verticalWalls[x, y] : horizontalWalls[x, y];
 
     public Wall GetNorthWall(int x, int y)
@@ -458,33 +380,6 @@ public class Map : MonoBehaviour
         return true;
     }
 
-    public void AddMob(Mob prefab, Vector3 position)
-    {
-        mobs.Add(Instantiate(prefab, position, Quaternion.identity));
-    }
-
-    public void AddForce(Vector3 position, float force, float range)
-    {
-        foreach (Mob mob in MobsInRange(position, range))
-        {
-            Vector3 delta = mob.transform.position - transform.position;
-            float distance = delta.magnitude;
-            delta /= distance;
-            float rangeMultiplier = 1f - distance / range;
-            mob.AddForce(delta * force * rangeMultiplier);
-        }
-    }
-
-    public static float Distance(Node n1, Node n2)
-    {
-        return Distance(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y);
-    }
-
-    public static float Distance(float x1, float y1, float x2, float y2)
-    {
-        return Mathf.Sqrt(SquareDistance(x1, y1, x2, y2));
-    }
-
     public static float SquareDistance(float x1, float y1, float x2, float y2)
     {
         return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
@@ -503,208 +398,6 @@ public class Map : MonoBehaviour
     public static float SquareDistance(Vector2 v1, Vector2 v2)
     {
         return SquareDistance(v1.x, v1.y, v2.x, v2.y);
-    }
-
-    public delegate float CostFunction(float distance, float cost, float crowFliesDistance, int steps);
-
-    public static float StandardCostFunction(float distance, float cost, float crowFliesDistance, int steps)
-    {
-        return distance + cost + crowFliesDistance;
-    }
-
-    public static float NoAdditionalsCostFunction(float distance, float cost, float crowFliesDistance, int steps)
-    {
-        return distance + crowFliesDistance;
-    }
-
-    public enum PathResult
-    {
-        Success,
-        FailureNoPath,
-        FailureTooManyTries,
-        FailureTooFar,
-    }
-
-    [System.Serializable]
-    public struct Path
-    {
-        public bool foundPath;
-        public PathResult result;
-        public List<Node> path;
-        public float pathDistance, pathCost, pathCrowFliesDistance;
-        public int pathSteps;
-
-        public Path(PathResult result)
-        {
-            foundPath = false;
-            this.result = result;
-            path = null;
-            pathDistance = 0;
-            pathCost = 0;
-            pathCrowFliesDistance = 0;
-            pathSteps = 0;
-
-            Debug.LogWarning("Path Result: " + result);
-        }
-    }
-
-    public Path PathFind(Node start, Node end, float maxDistance, int maxTries, CostFunction costFunction)
-    {
-        if (start == null || end == null)
-            return new Path(PathResult.FailureNoPath);
-
-        return PathFind(start.pos.x, start.pos.y, end.pos.x, end.pos.y, maxDistance, maxTries, costFunction);
-    }
-
-    public Path PathFind(int startX, int startY, int endX, int endY, float maxDistance, int maxTries)
-    {
-        return PathFind(startX, startY, endX, endY, maxDistance, maxTries, StandardCostFunction);
-    }
-
-    public Path PathFind(int startX, int startY, int endX, int endY, float maxDistance, int maxTries, CostFunction costFunction)
-    {
-        float d = Distance(startX, startY, endX, endY);
-
-        if (d > maxDistance) 
-            return new Path(PathResult.FailureTooFar);
-
-        Node start = GetNode(startX, startY);
-        Node end = GetNode(endX, endY);
-
-        if (start == null || end == null)
-            return new Path(PathResult.FailureNoPath);
-
-        if (start.IsImpassable || end.IsImpassable)
-            return new Path(PathResult.FailureNoPath);
-
-        List<Node> visited = new List<Node>();
-        List<Node> open = new List<Node>();
-        List<Node> closed = new List<Node>();
-
-        start.pathDistance = 0;
-        start.pathCrowFliesDistance = d;
-
-        open.Add(start);
-
-        int tries = 0;
-        while (true)
-        {
-            //Debug.Log("Try #" + tries);
-            tries++;
-            if (tries > maxTries)
-            {
-                foreach (Node p in visited)
-                    p.ClearPathFindingData();
-
-                return new Path(PathResult.FailureTooManyTries);
-            }
-
-            Node currentNode = null;
-
-            if (open.Count == 0)
-            {
-                foreach (Node p in visited)
-                    p.ClearPathFindingData();
-
-                return new Path(PathResult.FailureNoPath);
-            }
-
-            float currentCost = 0;
-
-            foreach (Node node in open)
-            {
-                if (currentNode == null)
-                {
-                    currentNode = node;
-                    currentCost = costFunction(currentNode.pathDistance, currentNode.pathCost, currentNode.pathCrowFliesDistance, currentNode.pathSteps);
-                }
-                else
-                {
-                    float nodeCost = costFunction(node.pathDistance, node.pathCost, node.pathCrowFliesDistance, node.pathSteps);
-                    if (nodeCost < currentCost)
-                    {
-                        currentCost = nodeCost;
-                        currentNode = node;
-                    }
-                }
-            }
-
-            if (currentNode == end)
-            {
-                break;
-            }
-
-            if (currentNode.pathDistance > maxDistance)
-            {
-                foreach (Node p in visited)
-                    p.ClearPathFindingData();
-
-                return new Path(PathResult.FailureTooFar);
-            }
-
-            open.Remove(currentNode);
-            closed.Add(currentNode);
-
-
-            for (int i = 0; i < currentNode.neighbours.Length; i++)
-            {
-                Node neighbour = currentNode.neighbours[i];
-
-                if (neighbour == null) continue;
-                if (neighbour.IsImpassable) continue;
-
-                float distance = 1;//i % 2 == 0 ? 1 : ROOT_2;//currentNode.distances[i];
-
-                float nextG = currentNode.pathDistance + distance;
-
-                if (nextG < neighbour.pathDistance)
-                {
-                    open.Remove(neighbour);
-                    closed.Remove(neighbour);
-                }
-
-                if (!open.Contains(neighbour) && !closed.Contains(neighbour))
-                {
-                    neighbour.pathDistance = nextG;
-                    neighbour.pathCrowFliesDistance = Distance(neighbour, end);
-                    neighbour.pathCost = currentNode.pathCost + neighbour.Cost + GetWallCost(currentNode.pos.x, currentNode.pos.y, i);
-                    neighbour.pathSteps = currentNode.pathSteps + 1;
-                    neighbour.pathParent = currentNode;
-                    open.Add(neighbour);
-                    visited.Add(neighbour);
-                }
-            }
-        }
-
-        List<Node> nodes = new List<Node>();
-        Node current = end;
-        while (current.pathParent != null)
-        {
-            nodes.Insert(0, current);
- //           nodes.Add(current);
-            //this is backwards.
-
-            current = current.pathParent;
-        }
-        nodes.Insert(0, start);
-        //nodes.Add(start);
-        //so is this.
-
-        Path result = new Path
-        {
-            result = PathResult.Success,
-            foundPath = true,
-            path = nodes,
-            pathDistance = end.pathDistance,
-            pathCrowFliesDistance = end.pathCrowFliesDistance,
-            pathCost = end.pathCost,
-            pathSteps = end.pathSteps,
-        };
-
-        foreach (Node p in visited)
-            p.ClearPathFindingData();
-
-        return result;
     }
 
     public Node ScreenPointToRayPlaneNode(Vector3 screenPos, float y, Camera camera)
@@ -726,36 +419,14 @@ public class Map : MonoBehaviour
 
     public void OnDrawGizmos()
     {
-       
         Vector3 mouse = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, Camera.main);
 
         int tileX = Mathf.FloorToInt(mouse.x);
         int tileZ = Mathf.FloorToInt(mouse.z);
         Gizmos.color = Color.red;
         DrawTile(tileX, tileZ);
-
-        if (start != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(new Vector3(start.pos.x + 0.5f, 0, start.pos.y + 0.5f), 0.25f);
-        }
-        if (end != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawSphere(new Vector3(end.pos.x + 0.5f, 0, end.pos.y + 0.5f), 0.25f);
-        }
-
-        if (path.foundPath)
-        {
-            Gizmos.color = Color.blue;
-            for (int i = 0; i < path.path.Count - 1; i++)
-            {
-                Node n0 = path.path[i];
-                Node n1 = path.path[i + 1];
-                Gizmos.DrawLine(new Vector3(n0.pos.x + 0.5f, 0, n0.pos.y + 0.5f), new Vector3(n1.pos.x + 0.5f, 0, n1.pos.y + 0.5f));
-            }
-        }
     }
+    
 
     public static void DrawTile(int x, int z)
     {

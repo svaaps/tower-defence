@@ -6,17 +6,26 @@ public class Block : MonoBehaviour
 {
     [SerializeField]
     private int life;
-    public Map.Path Path { get; set; }
+    
+    [SerializeField]
+    private int pathMaxTries;
+
+    [SerializeField]
+    private float pathMaxDistance;
+
+    public PathFinding.Path Path { get; set; }
     public int Life { get => life; set => life = value; }
     public Node Target { get; private set; }
     public Node Current { get; private set; }
 
-    public Vector3 axis, pivot;
-    public int direction;
-    public int nextX, nextY;
-    public bool moving;
-    public float angle;
-    public bool moved;
+    public Vector3 axis { get; set; }
+    public Vector3 pivot { get; set; }
+    public int direction { get; set; }
+    public int nextX { get; set; }
+    public int nextY { get; set; }
+    public bool moving { get; set; }
+    public float angle { get; set; }
+    public bool moved { get; set; }
 
     public void Update()
     {
@@ -62,7 +71,6 @@ public class Block : MonoBehaviour
             SnapAngle(transform.localRotation.eulerAngles.y),
             SnapAngle(transform.localRotation.eulerAngles.z)
         );
-
     }
 
     public void GoToNext()
@@ -73,22 +81,22 @@ public class Block : MonoBehaviour
         SetPosition(next);
     }
 
-    public virtual void DetermineTarget()
+    public virtual void RecalculatePath()
     {
         //Target = Map.Instance.GetNode(7, 15);//TODO
 
         int x = Current.pos.x;
         int y = Current.pos.y;
 
-        Path = Map.Instance.PathFind(Current, Target, Map.Instance.pathMaxDistance, Map.Instance.pathMaxTries, CostFunction());
+        Path = PathFinding.PathFind(Current, Target, pathMaxDistance, pathMaxTries, CostFunction());
 
-        if (!Path.foundPath || Path.path.Count <= 1)
+        if (!Path.FoundPath || Path.Nodes.Count <= 1)
         {
             moving = false;
             return;
         }
 
-        Node n1 = Path.path[1];
+        Node n1 = Path.Nodes[1];
         
         if (n1.block)
         {
@@ -128,10 +136,14 @@ public class Block : MonoBehaviour
         }
     }
 
-
-    public virtual Map.CostFunction CostFunction()
+    public void OnDrawGizmos()
     {
-        return Map.StandardCostFunction;
+        PathFinding.DrawPath(Path);
+    }
+
+    public virtual PathFinding.CostFunction CostFunction()
+    {
+        return PathFinding.StandardCostFunction;
     }
 
     public void Init(int x, int y)

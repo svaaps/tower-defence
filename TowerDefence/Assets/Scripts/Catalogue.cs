@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Catalogue : MonoBehaviour
 {
@@ -21,6 +22,33 @@ public class Catalogue : MonoBehaviour
 
     [SerializeField]
     private Color thumbnailBackgroundColor;
+
+    private static Catalogue instance;
+    public static Catalogue Instance => instance;
+    public void Awake()
+    {
+        instance = this;
+    }
+
+    public Structure PlaceStructurePrefab { get; set; }
+
+    public void Update()
+    {
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+
+        if (Input.GetMouseButtonDown(0) && Map.Instance.MouseNode != null)
+        {
+            Map.Instance.PlaceStructure(PlaceStructurePrefab, Map.Instance.MouseNode.pos.x, Map.Instance.MouseNode.pos.y, 0);
+        }
+
+        if (Input.GetMouseButtonDown(1) && Map.Instance.MouseNode != null)
+        {
+            Map.Instance.DeleteStructure(Map.Instance.MouseNode.pos.x, Map.Instance.MouseNode.pos.y);
+        }
+    }
 
     public void Start()
     {

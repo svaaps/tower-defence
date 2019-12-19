@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8146146868401278381}
   - component: {fileID: 7504263599785421801}
   - component: {fileID: 8208422133115074504}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -116,7 +116,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5021147035770844509}
   - component: {fileID: 3613713085230475305}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: ImpassableBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
