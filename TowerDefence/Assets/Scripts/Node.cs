@@ -21,10 +21,8 @@ public class Node : MonoBehaviour
     [HideInInspector]
     public Node pathParent;
 
-    public Mob mob;
-
+    public Block block;
     public float Cost => structure == null ? 0 : structure.cost;
-
     public bool IsImpassable => structure != null && structure.isImpassable;
 
     public void ClearPathFindingData()

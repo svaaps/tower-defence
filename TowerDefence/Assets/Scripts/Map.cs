@@ -1,11 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 
 public class Map : MonoBehaviour
 {
-
     private static Map instance;
     public static Map Instance => instance;
 
@@ -16,13 +17,20 @@ public class Map : MonoBehaviour
     private Wall[,] horizontalWalls;
     private Node[,] nodes;
 
+    private List<Mob> mobs = new List<Mob>();
+
     [SerializeField]
     private Node emptyNodePrefab;
+
+    [SerializeField]
+    private Block blockPrefab;
 
     [SerializeField]
     private Mob mobPrefab;
 
     public Structure placeStructurePrefab;
+
+    private Vector3 mousePlane;
 
     private Node mouseNode;
 
@@ -38,35 +46,42 @@ public class Map : MonoBehaviour
     [SerializeField]
     public int pathMaxTries;
 
+    public Node MouseNode => mouseNode;
+
     public void Awake()
     {
         instance = this;
         cam = Camera.main;
-
-        
     }
+
     public void Start()
     {
         Generate();
+        BakeNavMesh();
         CenterCamera();
 
-        nodes[7, 0].mob = Instantiate(mobPrefab);
-        nodes[7, 0].mob.Init(7, 0);
+        nodes[7, 0].block = Instantiate(blockPrefab);
+        nodes[7, 0].block.Init(7, 0);
+
+        for (int i = 0; i < 10; i++)
+            AddMob(mobPrefab, new Vector3(Random.Range(0, size.x), 0, Random.Range(0, size.y)));
     }
 
     public void Update()
     {
-        mouseNode = ScreenPointToRayPlaneNode(Input.mousePosition, 0, cam);
 
+        mousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
+        mouseNode = GetNode(Mathf.FloorToInt(mousePlane.x), Mathf.FloorToInt(mousePlane.z));
 
         if (EventSystem.current.IsPointerOverGameObject())
+        {
             return;
+        }
 
         if (Input.GetMouseButtonDown(0) && mouseNode != null)
         {
             PlaceStructure(placeStructurePrefab, mouseNode.pos.x, mouseNode.pos.y, 0);
         }
-
 
         if (Input.GetMouseButtonDown(1) && mouseNode != null)
         {
@@ -86,47 +101,86 @@ public class Map : MonoBehaviour
             path = PathFind(start, end, 1000, 1000, StandardCostFunction);
             Debug.Log(path.result);
         }
-
-        
     }
-    
 
     public void Tick()
     {
-        
-
         foreach (Node node in nodes)
         {
-            if (node.mob && node.mob.Path.foundPath && node.mob.moving && !node.mob.moved)
+            if (node.block && node.block.Path.foundPath && node.block.moving && !node.block.moved)
             {
-                node.mob.GoToNext();
+                node.block.GoToNext();
             }
         }
         foreach (Node node in nodes)
         {
-            if (node.mob)
+            if (node.block)
             {
-                node.mob.moved = false;
+                node.block.moved = false;
                 //node.mob.SetPosition(node);
-                node.mob.DetermineTarget();
+                node.block.DetermineTarget();
             }
         }
+    }
+
+    public Mob ClosestMob(Vector3 position)
+    {
+        Mob closest = null;
+        float sqDistance = float.MaxValue;
+        foreach(Mob mob in mobs)
+        {
+            float d = SquareDistance(position, mob.transform.position);
+            if (closest == null || sqDistance < d)
+            {
+                closest = mob;
+                sqDistance = d;
+            }
+        }
+        return closest;
+    }
+
+    public List<Mob> MobsInRange(Vector3 position, float range)
+    {
+        List<Mob> inRange = new List<Mob>();
+
+        foreach(Mob mob in mobs)
+            if (SquareDistance(position, mob.transform.position) <= range * range)
+                inRange.Add(mob);
+
+        return inRange;
+    }
+
+    public bool NearestBlock(Vector3 position, out Block nearest)
+    {
+        nearest = null;
+        float sqDistance = float.MaxValue;
+        foreach(Node node in nodes)
+        {
+            if (!node.block)
+                continue;
+            float d = SquareDistance(position, node.block.transform.position);
+            if (nearest == null || sqDistance > d)
+            {
+                nearest = node.block;
+                sqDistance = d;
+            }
+        }
+        return nearest;
     }
 
     public void InterTick(float t)
     {
         foreach (Node node in nodes)
         {
-            if (!node.mob)
+            if (!node.block)
                 continue;
 
-            if (!node.mob.moving)
+            if (!node.block.moving)
                 continue;
 
-            node.mob.angle = t * 90 - node.mob.angle;
-            Vector3 lerp = Vector3.Lerp(new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), new Vector3(node.mob.nextX + 0.5f, 0.5f, node.mob.nextY + 0.5f), t);
-            Debug.Log(lerp);
-            node.mob.transform.position = lerp;
+            node.block.angle = t * 90 - node.block.angle;
+            Vector3 lerp = Vector3.Lerp(new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), new Vector3(node.block.nextX + 0.5f, 0.5f, node.block.nextY + 0.5f), t);
+            node.block.transform.position = lerp;
         }
     }
 
@@ -232,7 +286,13 @@ public class Map : MonoBehaviour
         for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
-                nodes[x, y] = Instantiate(emptyNodePrefab, transform);
+
+#if UNITY_EDITOR
+                nodes[x, y] = PrefabUtility.InstantiatePrefab(emptyNodePrefab, transform) as Node;
+#else
+                nodes[x, y] = Object.Instantiate(emptyNodePrefab, transform);
+#endif
+
                 nodes[x, y].Init(x, y);
             }
 
@@ -295,7 +355,7 @@ public class Map : MonoBehaviour
         nodes[x, y].structure.rotation = rotation;
         nodes[x, y].structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         nodes[x, y].structure.transform.localRotation = Quaternion.Euler(rotation * 90, 0, 0);
-
+        BakeNavMesh();
         return true;
     }
 
@@ -398,6 +458,23 @@ public class Map : MonoBehaviour
         return true;
     }
 
+    public void AddMob(Mob prefab, Vector3 position)
+    {
+        mobs.Add(Instantiate(prefab, position, Quaternion.identity));
+    }
+
+    public void AddForce(Vector3 position, float force, float range)
+    {
+        foreach (Mob mob in MobsInRange(position, range))
+        {
+            Vector3 delta = mob.transform.position - transform.position;
+            float distance = delta.magnitude;
+            delta /= distance;
+            float rangeMultiplier = 1f - distance / range;
+            mob.AddForce(delta * force * rangeMultiplier);
+        }
+    }
+
     public static float Distance(Node n1, Node n2)
     {
         return Distance(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y);
@@ -411,6 +488,21 @@ public class Map : MonoBehaviour
     public static float SquareDistance(float x1, float y1, float x2, float y2)
     {
         return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    }
+
+    public static float SquareDistance(float x1, float y1, float z1, float x2, float y2, float z2)
+    {
+        return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1);
+    }
+
+    public static float SquareDistance(Vector3 v1, Vector3 v2)
+    {
+        return SquareDistance(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+    }
+
+    public static float SquareDistance(Vector2 v1, Vector2 v2)
+    {
+        return SquareDistance(v1.x, v1.y, v2.x, v2.y);
     }
 
     public delegate float CostFunction(float distance, float cost, float crowFliesDistance, int steps);
@@ -671,5 +763,48 @@ public class Map : MonoBehaviour
         Gizmos.DrawLine(new Vector3(x + 1, 0, z), new Vector3(x + 1, 0, z + 1));
         Gizmos.DrawLine(new Vector3(x + 1, 0, z + 1), new Vector3(x, 0, z + 1));
         Gizmos.DrawLine(new Vector3(x, 0, z + 1), new Vector3(x, 0, z));
+    }
+
+    [System.Serializable]
+    public struct NavMeshBuildSettingsSerialized
+    {
+        public float agentRadius;
+        public float agentHeight;
+        public float agentSlope;
+        public float agentClimb;
+        public float minRegionArea;
+        public int tileSize;
+    }
+
+    [SerializeField]
+    private NavMeshBuildSettingsSerialized navMeshBuildSettings;
+
+    [ContextMenu("Bake Nav Mesh")]
+    private void BakeNavMesh()
+    {
+        NavMeshBuildSettings buildSettings = new NavMeshBuildSettings
+        {
+            agentRadius = navMeshBuildSettings.agentRadius,
+            agentHeight = navMeshBuildSettings.agentHeight,
+            agentSlope = navMeshBuildSettings.agentSlope,
+            agentClimb = navMeshBuildSettings.agentClimb,
+            minRegionArea = navMeshBuildSettings.minRegionArea,
+            tileSize = navMeshBuildSettings.tileSize,
+            overrideTileSize = true
+        };
+
+        List<NavMeshBuildSource> sources = new List<NavMeshBuildSource>();
+
+        foreach (NavMeshObject nmo in GetComponentsInChildren<NavMeshObject>())
+            sources.Add(nmo.NavMeshBuildSource());
+
+
+        Vector3 size = Vector3.Scale(transform.lossyScale, new Vector3(this.size.x, 1, this.size.y) * 2);
+
+        NavMeshData data = NavMeshBuilder.BuildNavMeshData(buildSettings, sources, new Bounds(Vector3.zero, size), Vector3.zero, Quaternion.identity);
+
+
+        NavMesh.RemoveAllNavMeshData();
+        NavMesh.AddNavMeshData(data);
     }
 }

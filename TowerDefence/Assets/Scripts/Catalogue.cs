@@ -48,7 +48,7 @@ public class Catalogue : MonoBehaviour
 
             camera.transform.position = new Vector3(0.5f, 0, 0.5f);
             camera.transform.position -= camera.transform.forward * thumbnailCameraDistance;
-            camera.orthographicSize = structure.height + 0.5f; 
+            camera.orthographicSize = structure.height + 0.5f;
             camera.Render();
 
             thumbnail.ReadPixels(new Rect(0, 0, thumbnailSize, thumbnailSize), 0, 0);

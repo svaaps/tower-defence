@@ -16,5 +16,4 @@ public class Structure : MonoBehaviour
     public bool isImpassable;
     public int height = 1;
     public Texture2D thumbnail;
-
 }
