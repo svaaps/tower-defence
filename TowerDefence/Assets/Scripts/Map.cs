@@ -23,6 +23,7 @@ public class Map : MonoBehaviour
     private Camera cam;
     public Vector3 MousePlane { get; private set; }
     public Node MouseNode { get; private set; }
+    public Vector2Int MouseTile { get; private set; }
     public Vector2Int Size => size;
 
     public void Awake()
@@ -42,14 +43,21 @@ public class Map : MonoBehaviour
     public void Update()
     {
         MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
-        MouseNode = GetNode(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
+        MouseTile = new Vector2Int(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
+        MouseNode = GetNode(MouseTile.x, MouseTile.y);
     }
 
     public void Tick()
     {
-        foreach(Node node in nodes)
+        foreach (Node node in nodes)
         {
-            if (node.structure != null)
+            if (node.structure != null && node.structure.placed)
+                node.structure.EarlyTick();
+        }
+
+        foreach (Node node in nodes)
+        {
+            if (node.structure != null && node.structure.placed)
                 node.structure.Tick();
         }
         foreach (Node node in nodes)
@@ -69,10 +77,21 @@ public class Map : MonoBehaviour
                     node.block.GoToNext();
             }
         }
+
+        foreach (Node node in nodes)
+        {
+            if (node.structure != null && node.structure.placed)
+                node.structure.LateTick();
+        }
+
     }
 
     public void InterTick(float t)
     {
+        foreach (Node node in nodes)
+            if (node.structure != null && node.structure.placed)
+                node.structure.InterTick(t);
+
         foreach (Node node in nodes)
         {
             if (!node.block)
@@ -82,7 +101,7 @@ public class Map : MonoBehaviour
                 continue;
 
             node.block.angle = t * 90 - node.block.angle;
-            Vector3 lerp = Vector3.Lerp(new Vector3(node.block.prevX + 0.5f, 0.5f, node.block.prevY + 0.5f), new Vector3(node.pos.x + 0.5f, 0.5f, node.pos.y + 0.5f), t);
+            Vector3 lerp = Vector3.Lerp(new Vector3(node.block.prevX + 0.5f, 0, node.block.prevY + 0.5f), new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f), t);
             node.block.transform.position = lerp;
         }
     }
@@ -99,6 +118,26 @@ public class Map : MonoBehaviour
             if (nearest == null || sqDistance > d)
             {
                 nearest = node.block;
+                sqDistance = d;
+            }
+        }
+        return nearest;
+    }
+
+    public bool NearestBlockGoal(Vector3 position, out BlockGoal nearest)
+    {
+        nearest = null;
+        float sqDistance = float.MaxValue;
+        foreach(Node node in nodes)
+        {
+            if (!node.structure)
+                continue;
+            if (!(node.structure is BlockGoal))
+                continue;
+            float d = SquareDistance(position, new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f));
+            if (nearest == null || sqDistance > d)
+            {
+                nearest = node.structure as BlockGoal;
                 sqDistance = d;
             }
         }
@@ -265,8 +304,9 @@ public class Map : MonoBehaviour
         if (w) w.EastNeighbour = t;
     }
 
-    public bool PlaceStructure(Structure prefab, int x, int y, int rotation, bool sudo = false)
+    public bool PlaceStructure(Structure prefab, int x, int y, int rotation, out Structure structure, bool sudo = false)
     {
+        structure = null;
         if (x < 0 || y < 0 || x >= size.x || y >= size.y)
             return false;
 
@@ -285,11 +325,11 @@ public class Map : MonoBehaviour
         if (prefab == null)
             return true;
 
-        nodes[x, y].structure = Instantiate(prefab, nodes[x, y].transform);
-        nodes[x, y].structure.node = nodes[x, y];
-        nodes[x, y].structure.rotation = rotation;
-        nodes[x, y].structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
-        nodes[x, y].structure.transform.localRotation = Quaternion.Euler(rotation * 90, 0, 0);
+        structure = Instantiate(prefab, nodes[x, y].transform);
+        structure.node = nodes[x, y];
+        structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
+        structure.Rotation = rotation;
+        nodes[x, y].structure = structure;
         //BakeNavMesh();
         return true;
     }

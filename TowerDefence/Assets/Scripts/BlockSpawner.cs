@@ -6,6 +6,9 @@ public class BlockSpawner : Structure
 {
     [SerializeField]
     private int spawnInterval;
+    
+    [SerializeField]
+    private bool spawnLoop;
 
     [SerializeField]
     private Block[] spawnQueue;
@@ -13,9 +16,19 @@ public class BlockSpawner : Structure
     private int spawnCounter;
     private List<Block> queue = new List<Block>();
 
+    private Renderer rend;
+
+
     public void Awake()
     {
+        rend = GetComponentInChildren<Renderer>();
+        //SetColor(color);
         FillQueue();
+    }
+
+    public void SetColor(Color color)
+    {
+        rend.material.SetColor("_EmissionColor", color);
     }
 
     private void FillQueue()
@@ -38,12 +51,30 @@ public class BlockSpawner : Structure
     private void SpawnNext()
     {
         if (node.block != null)
+        {
             return;
+        }
 
         if (queue.Count <= 0)
-            return;
+        {
+            if (spawnLoop)
+            {
+                FillQueue();
+            }
+            else
+            {
+                SetColor(Block.Black);
+                return;
+            }
+        }
 
         if (Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y))
+        {
             queue.RemoveAt(0);
+        }
+        if (queue.Count > 0)
+        {
+            SetColor(queue[0].Color * 3);
+        }
     }
 }

@@ -46,7 +46,7 @@ public class Game : MonoBehaviour
         foreach (Mob mob in mobs)
         {
             float d = Map.SquareDistance(position, mob.transform.position);
-            if (closest == null || sqDistance < d)
+            if (closest == null || sqDistance > d)
             {
                 closest = mob;
                 sqDistance = d;

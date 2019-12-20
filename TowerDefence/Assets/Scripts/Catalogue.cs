@@ -25,6 +25,9 @@ public class Catalogue : MonoBehaviour
 
     private static Catalogue instance;
     public static Catalogue Instance => instance;
+
+    private Structure placing;
+
     public void Awake()
     {
         instance = this;
@@ -34,19 +37,31 @@ public class Catalogue : MonoBehaviour
 
     public void Update()
     {
-        if (EventSystem.current.IsPointerOverGameObject())
+        if (!EventSystem.current.IsPointerOverGameObject() && Input.GetMouseButtonDown(0) && Map.Instance.MouseNode != null)
         {
+            Map.Instance.PlaceStructure(PlaceStructurePrefab, Map.Instance.MouseNode.pos.x, Map.Instance.MouseNode.pos.y, 0, out placing);
             return;
         }
 
-        if (Input.GetMouseButtonDown(0) && Map.Instance.MouseNode != null)
+        if (placing != null && placing.node != Map.Instance.MouseNode)
         {
-            Map.Instance.PlaceStructure(PlaceStructurePrefab, Map.Instance.MouseNode.pos.x, Map.Instance.MouseNode.pos.y, 0);
+            float direction = -Mathf.Atan2(placing.node.pos.y - Map.Instance.MouseTile.y, placing.node.pos.x - Map.Instance.MouseTile.x) * Mathf.Rad2Deg;
+
+            direction -= 90;
+            direction %= 360;
+            direction += 360;
+            direction += 45;
+            direction %= 360;
+            direction /= 90;
+
+            placing.Rotation = Mathf.FloorToInt(direction);
         }
 
-        if (Input.GetMouseButtonDown(1) && Map.Instance.MouseNode != null)
+        if (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0))
         {
-            Map.Instance.DeleteStructure(Map.Instance.MouseNode.pos.x, Map.Instance.MouseNode.pos.y);
+            if (placing != null)
+                placing.placed = true;
+            placing = null;
         }
     }
 

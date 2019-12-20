@@ -4,6 +4,24 @@ using UnityEngine;
 
 public class Block : MonoBehaviour
 {
+    public static Color Black = Color.black;
+    public static Color Red = Color.red;
+    public static Color Green = new Color(.125f, .75f, 0, 1);
+    public static Color Blue = new Color(0, .125f, .75f, 1);
+
+    private static Color[] Colors =
+    {
+        Black,
+        Red,
+        Green,
+        Blue
+    };
+
+    public static Color GetColor(int index) => index < 0 || index >= Colors.Length ? Colors[0] : Colors[index];
+
+    [SerializeField]
+    private int color;
+
     [SerializeField]
     private int life;
     
@@ -13,6 +31,7 @@ public class Block : MonoBehaviour
     [SerializeField]
     private float pathMaxDistance;
 
+    public Color Color => GetColor(color);
     public PathFinding.Path Path { get; set; }
     public int Life { get => life; set => life = value; }
     public Node Target { get; private set; }
@@ -29,9 +48,11 @@ public class Block : MonoBehaviour
     public float angle { get; set; }
     public bool moved { get; set; }
 
-    public void Start()
+    public void Awake()
     {
-        Target = Map.Instance.GetNode(7, 15);//TODO
+        Renderer rend = GetComponentInChildren<Renderer>();
+        Color color = Color;
+        rend.material.SetColor("_EmissionColor", color * 2);
     }
 
     public void Update()
@@ -98,6 +119,10 @@ public class Block : MonoBehaviour
     public virtual void RecalculatePath()
     {
         //Target = Map.Instance.GetNode(7, 15);//TODO
+        if (Map.Instance.NearestBlockGoal(transform.position, out BlockGoal goal))
+        {
+            Target = goal.node;
+        }
 
         int x = Current.pos.x;
         int y = Current.pos.y;
@@ -162,7 +187,7 @@ public class Block : MonoBehaviour
 
     public void Init(int x, int y)
     {
-        transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
+        transform.position = new Vector3(x + 0.5f, 0, y + 0.5f);
         Current = Map.Instance.GetNode(x, y);
         prevX = x;
         prevY = y;

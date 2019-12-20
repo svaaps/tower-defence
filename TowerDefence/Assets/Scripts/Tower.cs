@@ -22,30 +22,35 @@ public class Tower : Structure
 
     public override void Tick()
     {
+        /*
         if (target != null && Map.SquareDistance(transform.position, target.transform.position) > range * range)
             target = null;
 
         if (target == null)
         {
             target = Game.Instance.ClosestMob(transform.position);
-            if (target != null && Map.SquareDistance(transform.position, target.transform.position) > range * range)
-                target = null;
         }
 
-        if (target != null)
-            fireCounter++;
+        */
 
-        if (fireCounter >= fireInterval && target != null)
+        target = Game.Instance.ClosestMob(transform.position);
+
+        if (target != null)
         {
-            fireCounter = 0;
-            if (target != null)
-                Fire(target.transform.position);
+            fireCounter++;
+            if (fireCounter >= fireInterval)
+            {
+                fireCounter = 0;
+                if (target != null)
+                    Fire(target.transform.position);
+            }
         }
     }
 
     public void Fire(Vector3 position)
     {
         Projectile projectile = Instantiate(projectilePrefab, projectileStart.position, projectileStart.rotation);
-        projectile.Fire(position);
+        if (!projectile.Fire(position))
+            Destroy(projectile.gameObject);
     }
 }

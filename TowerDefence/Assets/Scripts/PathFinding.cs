@@ -159,8 +159,12 @@ public class PathFinding : MonoBehaviour
             {
                 Node neighbour = currentNode.neighbours[i];
 
-                if (neighbour == null) continue;
-                if (neighbour.IsImpassable) continue;
+                if (neighbour == null) 
+                    continue;
+                if (neighbour.IsImpassable) 
+                    continue;
+                if (currentNode.structure != null && currentNode.structure.ExitBlocked(i))
+                    continue;
 
                 float distance = 1;//i % 2 == 0 ? 1 : ROOT_2;//currentNode.distances[i];
 
@@ -180,7 +184,8 @@ public class PathFinding : MonoBehaviour
                     neighbour.pathSteps = currentNode.pathSteps + 1;
                     neighbour.pathParent = currentNode;
                     open.Add(neighbour);
-                    visited.Add(neighbour);
+                    if (!visited.Contains(neighbour))
+                        visited.Add(neighbour);
                 }
             }
         }

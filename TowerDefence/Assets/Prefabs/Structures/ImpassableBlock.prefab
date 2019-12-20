@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 5021147035770844509}
   - component: {fileID: 3613713085230475305}
   - component: {fileID: 6806817299597268352}
+  - component: {fileID: 7481978614371931991}
   m_Layer: 11
   m_Name: ImpassableBlock
   m_TagString: Untagged
@@ -137,7 +138,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 674186b2cef48184982c3ba7096bcd34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotation: 0
   cost: 10
   canBeBuiltOver: 0
   isRemovable: 1
@@ -145,6 +145,7 @@ MonoBehaviour:
   isImpassable: 1
   height: 1
   thumbnail: {fileID: 0}
+  node: {fileID: 0}
 --- !u!208 &6806817299597268352
 NavMeshObstacle:
   m_ObjectHideFlags: 0
@@ -161,3 +162,16 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 0.5, z: 0}
   m_TimeToStationary: 0.5
+--- !u!65 &7481978614371931991
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9187358993933060968}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0.5, z: 0}
