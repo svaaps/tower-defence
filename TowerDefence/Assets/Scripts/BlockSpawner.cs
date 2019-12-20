@@ -57,7 +57,13 @@ public class BlockSpawner : Structure
         {
             return;
         }
-
+        if (queue.Count > 0)
+        {
+            if (Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y))
+            {
+                queue.RemoveAt(0);
+            }
+        }
         if (queue.Count <= 0)
         {
             if (spawnLoop)
@@ -71,10 +77,6 @@ public class BlockSpawner : Structure
             }
         }
 
-        if (Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y))
-        {
-            queue.RemoveAt(0);
-        }
         if (queue.Count > 0)
         {
             SetColor(queue[0].Color * 3);

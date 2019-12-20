@@ -151,10 +151,11 @@ MonoBehaviour:
   placed: 0
   thumbnail: {fileID: 0}
   node: {fileID: 0}
-  spawnInterval: 2
+  spawnInterval: 3
   spawnLoop: 1
   spawnQueue:
-  - {fileID: 6206721299358694619, guid: 2756677c1a285dd47aa7ee7eebede9f5, type: 3}
+  - {fileID: 1163175165600398952, guid: d85354fecf40e734caa30e32187a61b8, type: 3}
+  - {fileID: 8263251230457504250, guid: 3f8ecc8b1d7bf3a489f02f8ea8a4b7d9, type: 3}
 --- !u!208 &5821505530975592119
 NavMeshObstacle:
   m_ObjectHideFlags: 0
