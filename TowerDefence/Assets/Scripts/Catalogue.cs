@@ -63,7 +63,26 @@ public class Catalogue : MonoBehaviour
                 placing.placed = true;
             placing = null;
         }
+
+        if (Input.GetMouseButton(1))
+        {
+            float maxDistance = 50;
+            LayerMask layerMask = LayerMask.GetMask("Structures");
+
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hitInfo, maxDistance, layerMask, QueryTriggerInteraction.Collide))
+            {
+                Structure structure = hitInfo.collider.GetComponent<Structure>();
+                if (!structure)
+                    structure = hitInfo.collider.GetComponentInParent<Structure>();
+                if (structure)
+                {
+                    Map.Instance.DeleteStructure(structure.node.pos.x, structure.node.pos.y);
+                }
+            }
+        }
     }
+
+    
 
     public void Start()
     {

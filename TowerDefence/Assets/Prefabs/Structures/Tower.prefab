@@ -186,8 +186,13 @@ MonoBehaviour:
   canBeBuiltOver: 0
   isRemovable: 1
   isObstacle: 1
-  isImpassable: 0
+  isImpassable: 1
+  northExitBlocked: 0
+  eastExitBlocked: 0
+  southExitBlocked: 0
+  westExitBlocked: 0
   height: 2
+  placed: 0
   thumbnail: {fileID: 0}
   node: {fileID: 0}
   projectileStart: {fileID: 6444177388968037742}

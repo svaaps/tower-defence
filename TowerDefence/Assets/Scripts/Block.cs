@@ -31,6 +31,8 @@ public class Block : MonoBehaviour
     [SerializeField]
     private float pathMaxDistance;
 
+    private float despawnTimer;
+
     public Color Color => GetColor(color);
     public PathFinding.Path Path { get; set; }
     public int Life { get => life; set => life = value; }
@@ -59,6 +61,20 @@ public class Block : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.T))
             Target = Map.Instance.MouseNode;
+
+        if (Current == null)
+        {
+            despawnTimer += Time.deltaTime;
+            if (despawnTimer > 5)
+            {
+                Destroy(gameObject);
+                return;
+            }
+        }
+        else
+        {
+            despawnTimer = 0;
+        }
     }
 
     private static int DirectionFrom(Node n0, Node n1)

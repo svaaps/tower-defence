@@ -22,8 +22,11 @@ public class BlockSpawner : Structure
     public void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
-        //SetColor(color);
         FillQueue();
+        if (queue.Count > 0)
+        {
+            SetColor(queue[0].Color * 3);
+        }
     }
 
     public void SetColor(Color color)
