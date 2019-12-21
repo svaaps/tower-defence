@@ -19,6 +19,7 @@ public class PathFinding : MonoBehaviour
     public enum PathResult
     {
         Success,
+        AtDestination,
         FailureNoPath,
         FailureTooManyTries,
         FailureTooFar,
@@ -35,7 +36,7 @@ public class PathFinding : MonoBehaviour
         public float CrowFliesDistance { get; private set; }
         public int Steps { get; private set; }
         public Node Start => Nodes != null && Nodes.Count > 0 ? Nodes[0] : null;
-        public Node End => Nodes != null && Nodes.Count > 0 ? Nodes[Steps] : null;
+        public Node End => Nodes != null && Nodes.Count > 0 ? Nodes[Nodes.Count - 1] : null;
 
         public Path(PathResult result)
         {
@@ -80,6 +81,9 @@ public class PathFinding : MonoBehaviour
 
         if (end.IsImpassable)
             return new Path(PathResult.FailureNoPath);
+
+        if (start == end)
+            return new Path(PathResult.AtDestination);
 
         float d = Distance(start.pos.x, start.pos.y, end.pos.x, end.pos.y);
 

@@ -14,13 +14,20 @@ public class Mob : MonoBehaviour
     private float setDestinationCounter;
 
     [SerializeField]
+    private float life;
+    private bool dead;
+
+    [SerializeField]
     private float minimumRigidbodyVelocity = 2;
+
+    private Cubes cubes;
 
     public void Awake()
     {
         rb = GetComponent<Rigidbody>();
         agent = GetComponent<NavMeshAgent>();
         setDestinationCounter = Random.value;
+        cubes = GetComponentInChildren<Cubes>();
     }
 
     public void Update()
@@ -65,6 +72,16 @@ public class Mob : MonoBehaviour
         }
     }
 
+    public void AddDamage(float damage)
+    {
+        life -= damage;
+        if (life <= 0 && !dead)
+        {
+            OnDeath();
+            Destroy(gameObject);
+        }
+    }
+
     public void AddForce(Vector3 force)
     {
         rb.AddForce(force, ForceMode.Impulse);
@@ -73,5 +90,6 @@ public class Mob : MonoBehaviour
     public void OnDeath()
     {
         Game.Instance.RemoveMob(this);
+        cubes.Explode();
     }
 }

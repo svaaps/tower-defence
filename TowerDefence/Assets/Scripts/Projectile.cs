@@ -34,6 +34,9 @@ public class Projectile : MonoBehaviour
     private float explosionForce;
 
     [SerializeField]
+    private float explosionDamage;
+
+    [SerializeField]
     private float explosionRange;
 
     private Rigidbody rb;
@@ -67,6 +70,7 @@ public class Projectile : MonoBehaviour
     public virtual void OnHit()
     {
         Game.Instance.AddForce(transform.position, explosionForce, explosionRange);
+        Game.Instance.AddDamage(transform.position, explosionDamage, explosionRange);
         if (explosionParticleSystem)
             Instantiate(explosionParticleSystem, transform.position, Quaternion.identity);
     }

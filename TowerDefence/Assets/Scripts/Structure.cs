@@ -57,6 +57,7 @@ public class Structure : MonoBehaviour
         }
     }
 
+    public virtual void OnPlace() { }
     public virtual void EarlyTick() { }
     public virtual void Tick() { }
     public virtual void LateTick() { }

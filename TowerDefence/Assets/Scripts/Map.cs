@@ -10,6 +10,9 @@ public class Map : MonoBehaviour
     private static Map instance;
     public static Map Instance => instance;
 
+    public static float PATHFINDING_MAX_DISTANCE = 100;
+    public static int PATHFINDING_MAX_TRIES = 1000;
+
     private Wall[,] verticalWalls;
     private Wall[,] horizontalWalls;
     private Node[,] nodes;
@@ -25,6 +28,7 @@ public class Map : MonoBehaviour
     public Node MouseNode { get; private set; }
     public Vector2Int MouseTile { get; private set; }
     public Vector2Int Size => size;
+    public bool Changed { get; private set; }
 
     public void Awake()
     {
@@ -47,6 +51,11 @@ public class Map : MonoBehaviour
         MouseNode = GetNode(MouseTile.x, MouseTile.y);
     }
 
+    public void DeclareMapChanged()
+    {
+        Changed = true;
+    }
+
     public void Tick()
     {
         foreach (Node node in nodes)
@@ -60,21 +69,70 @@ public class Map : MonoBehaviour
             if (node.structure != null && node.structure.placed)
                 node.structure.Tick();
         }
-        foreach (Node node in nodes)
+
+        List<Block> blocks = new List<Block>();
+
+        foreach(Node node in nodes)
         {
             if (node.block)
             {
+                node.block.waiting = false;
                 node.block.moved = false;
+                node.block.moving = false;
+                node.block.updated = false;
+                blocks.Add(node.block);
+               // if (Changed)
+                    node.block.RecalculatePath();
             }
         }
 
-        foreach (Node node in nodes)
+        for (int t = 0; t < 100; t++)
         {
-            if (node.block && !node.block.moved)
+            foreach(Block block in blocks)
             {
-                node.block.RecalculatePath();
-                if (node.block.Path.FoundPath && node.block.moving)
-                    node.block.GoToNext();
+                if (block.updated || block.moved)
+                    continue;
+
+                if (block.Path.FoundPath)
+                {
+                    if (!block.Path.Nodes[1].block)
+                    {
+                        block.moving = true;
+                        block.GoToNext();
+                        block.updated = true;
+                    }
+                    else if (!block.Path.Nodes[1].block.moved)
+                    {
+                        block.waiting = true;
+                    }
+                    else
+                    {
+                        block.updated = true;
+                        block.moving = false;
+                    }
+                }
+            }
+
+            for (int i = blocks.Count - 1; i >= 0; i--)
+            {
+                if (blocks[i].updated)
+                    blocks.RemoveAt(i);
+            }
+        }
+
+        foreach (Block block in blocks)
+        {
+            if (block.updated || block.moved)
+                continue;
+
+            if (block.Path.FoundPath)
+            {
+                if (!block.Path.Nodes[1].block)
+                {
+                    block.moving = true;
+                    block.GoToNext();
+                    block.updated = true;
+                }
             }
         }
 
@@ -84,6 +142,7 @@ public class Map : MonoBehaviour
                 node.structure.LateTick();
         }
 
+        Changed = false;
     }
 
     public void InterTick(float t)
@@ -100,7 +159,7 @@ public class Map : MonoBehaviour
             if (!node.block.moving)
                 continue;
 
-            node.block.angle = t * 90 - node.block.angle;
+            //node.block.angle = t * 90 - node.block.angle;
             Vector3 lerp = Vector3.Lerp(new Vector3(node.block.prevX + 0.5f, 0, node.block.prevY + 0.5f), new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f), t);
             node.block.transform.position = lerp;
         }
@@ -163,6 +222,21 @@ public class Map : MonoBehaviour
         nodes[x, y].block = Instantiate(prefab);
         nodes[x, y].block.Init(x, y);
         
+        return true;
+    }
+
+    public bool AddBlock(Block prefab, int x, int y, PathFinding.Path path)
+    {
+        if (x < 0 || y < 0 || x >= size.x || y >= size.y)
+            return false;
+
+        if (nodes[x, y].block != null)
+            return false;
+
+        nodes[x, y].block = Instantiate(prefab);
+        nodes[x, y].block.Init(x, y);
+        nodes[x, y].block.Path = path;
+
         return true;
     }
 
@@ -320,6 +394,7 @@ public class Map : MonoBehaviour
 
             Destroy(nodes[x, y].structure.gameObject);
             nodes[x, y] = null;
+            Changed = true;
         }
 
         if (prefab == null)
@@ -330,6 +405,7 @@ public class Map : MonoBehaviour
         structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         structure.Rotation = rotation;
         nodes[x, y].structure = structure;
+        Changed = true;
         //BakeNavMesh();
         return true;
     }
@@ -359,6 +435,11 @@ public class Map : MonoBehaviour
                 return false;
 
             Destroy(existing.gameObject);
+            if (vertical)
+                verticalWalls[x, y] = null;
+            else
+                horizontalWalls[x, y] = null;
+            Changed = true;
         }
 
         if (prefab == null)
@@ -372,6 +453,7 @@ public class Map : MonoBehaviour
         if (vertical)
         {
             verticalWalls[x, y] = wall;
+            Changed = true;
             if (wall)
             {
                 wall.transform.localPosition = new Vector3(x, 0, y + 0.5f);
@@ -404,6 +486,7 @@ public class Map : MonoBehaviour
 
         Destroy(nodes[x, y].structure.gameObject);
         nodes[x, y].structure = null;
+        Changed = true;
         return true;
     }
 
@@ -429,6 +512,11 @@ public class Map : MonoBehaviour
             return false;
 
         Destroy(existing.gameObject);
+        if (vertical)
+            verticalWalls[x, y] = null;
+        else
+            horizontalWalls[x, y] = null;
+        Changed = true;
 
         return true;
     }

@@ -60,7 +60,10 @@ public class Catalogue : MonoBehaviour
         if (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0))
         {
             if (placing != null)
+            {
                 placing.placed = true;
+                placing.OnPlace();
+            }
             placing = null;
         }
 

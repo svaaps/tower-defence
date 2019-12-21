@@ -24,7 +24,7 @@ public class Game : MonoBehaviour
 
     public void Start()
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 50; i++)
             AddMob(mobPrefab, new Vector3(Random.Range(0, Map.Instance.Size.x), 0, Random.Range(0, Map.Instance.Size.y)));
     }
 
@@ -64,6 +64,18 @@ public class Game : MonoBehaviour
                 inRange.Add(mob);
 
         return inRange;
+    }
+
+    public void AddDamage(Vector3 position, float damage, float range)
+    {
+        foreach (Mob mob in MobsInRange(position, range))
+        {
+            Vector3 delta = mob.transform.position - position;
+            float distance = delta.magnitude;
+            delta /= distance;
+            float rangeMultiplier = 1f - distance / range;
+            mob.AddDamage(damage * rangeMultiplier);
+        }
     }
 
     public void AddForce(Vector3 position, float force, float range)

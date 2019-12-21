@@ -18,15 +18,32 @@ public class BlockSpawner : Structure
 
     private Renderer rend;
 
+    private PathFinding.Path path;
 
     public void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
+        
+    }
+
+    public override void OnPlace()
+    {
+        RecalculatePath();
         FillQueue();
         if (queue.Count > 0)
         {
             SetColor(queue[0].Color * 3);
         }
+    }
+
+    public void RecalculatePath()
+    {
+        Node target = null;
+
+        if (Map.Instance.NearestBlockGoal(new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f), out BlockGoal goal))
+            target = goal.node;
+
+        path = PathFinding.PathFind(node, target, Map.PATHFINDING_MAX_DISTANCE, Map.PATHFINDING_MAX_TRIES, PathFinding.StandardCostFunction);
     }
 
     public void SetColor(Color color)
@@ -47,22 +64,21 @@ public class BlockSpawner : Structure
         if (spawnCounter >= spawnInterval)
         {
             spawnCounter = 0;
+            if (Map.Instance.Changed)
+                RecalculatePath();
             SpawnNext();
         }
     }
 
     private void SpawnNext()
     {
-        if (node.block != null)
+        if (queue.Count > 0 && Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y, path))
         {
-            return;
+            queue.RemoveAt(0);
         }
-        if (queue.Count > 0)
+        else
         {
-            if (Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y))
-            {
-                queue.RemoveAt(0);
-            }
+          //  Debug.Log("Failing to add a block " + queue.Count + " " + node.block + " " + node.block.moved + " " + node.block.updated);
         }
         if (queue.Count <= 0)
         {
