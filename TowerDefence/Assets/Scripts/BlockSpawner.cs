@@ -35,6 +35,12 @@ public class BlockSpawner : Structure
         }
     }
 
+    public override void BuildModeUpdate(bool mapChanged)
+    {
+        if (mapChanged)
+            RecalculatePath();
+    }
+
     public void RecalculatePath()
     {
         Map.Instance.NearestBlockGoal(node, out _, out path);

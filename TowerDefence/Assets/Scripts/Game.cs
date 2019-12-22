@@ -19,7 +19,17 @@ public class Game : MonoBehaviour
         Save,
     }
 
-    public State GameState { get; private set; } = State.Start;
+    private State gameState = State.Start;
+
+    public State GameState
+    {
+        get => gameState;
+        private set
+        {
+            gameState = value;
+            UIGameStateChanger.Instance.SetState(value);
+        }
+    }
 
     [SerializeField]
     private float tickInterval;
@@ -38,8 +48,7 @@ public class Game : MonoBehaviour
 
     private void Start()
     {
-        PressNewGame();
-        PressPlay();
+        GameState = State.Start;
     }
 
     public void PressNewGame()
