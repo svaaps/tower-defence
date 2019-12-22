@@ -108,13 +108,11 @@ public class Block : MonoBehaviour
 
     public virtual void RecalculatePath()
     {
-        if (Map.Instance.NearestBlockGoal(transform.position, out BlockGoal goal))
+        if (Map.Instance.NearestBlockGoal(Current, out BlockGoal goal, out PathFinding.Path path))
+        {
+            Path = path;
             Target = goal.node;
-
-        int x = Current.pos.x;
-        int y = Current.pos.y;
-
-        Path = PathFinding.PathFind(Current, Target, Map.PATHFINDING_MAX_DISTANCE, Map.PATHFINDING_MAX_TRIES, CostFunction());
+        }
     }
 
     public void OnDrawGizmosSelected()

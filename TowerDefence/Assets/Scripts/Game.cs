@@ -5,7 +5,21 @@ using UnityEngine;
 public class Game : MonoBehaviour
 {
     private static Game instance;
+
     public static Game Instance => instance;
+
+    public enum State
+    {
+        Start,
+        Build,
+        Play,
+        Pause,
+        Win,
+        Lose,
+        Save,
+    }
+
+    public State GameState { get; private set; } = State.Start;
 
     [SerializeField]
     private float tickInterval;
@@ -17,26 +31,140 @@ public class Game : MonoBehaviour
 
     private List<Mob> mobs = new List<Mob>();
 
-    public void Awake()
+    private void Awake()
     {
         instance = this;
     }
 
-    public void Start()
+    private void Start()
     {
+        PressNewGame();
+        PressPlay();
+    }
+
+    public void PressNewGame()
+    {
+        if (GameState != State.Start)
+            return;
+
+        GameState = State.Build;
+        NewGame();
+    }
+
+    public void PressPlay()
+    {
+        if (GameState != State.Build)
+            return;
+
+        GameState = State.Play;
+        Play();
+    }
+
+    public void PressPause()
+    {
+        if (GameState != State.Play)
+            return;
+
+        GameState = State.Pause;
+        Pause();
+    }
+
+    public void PressResume()
+    {
+        if (GameState != State.Pause)
+            return;
+
+        GameState = State.Play;
+        Resume();
+    }
+
+    public void PressGiveUp()
+    {
+        if (GameState != State.Pause)
+            return;
+
+        GameState = State.Lose;
+        GiveUp();
+    }
+
+    public void PressSaveAndExit()
+    {
+        if (GameState != State.Build)
+            return;
+
+        GameState = State.Save;
+        SaveAndExit();
+    }
+
+    private void NewGame()
+    {
+        Map.Instance.Generate();
+    }
+
+    private void Play()
+    {
+        Time.timeScale = 1;
+
         for (int i = 0; i < 50; i++)
             AddMob(mobPrefab, new Vector3(Random.Range(0, Map.Instance.Size.x), 0, Random.Range(0, Map.Instance.Size.y)));
     }
 
-    public void FixedUpdate()
+    private void Pause()
     {
-        counter += Time.deltaTime;
-        while(counter >= tickInterval)
+        Time.timeScale = 0;
+    }
+
+    private void Resume()
+    {
+        Time.timeScale = 1;
+    }
+
+    private void GiveUp()
+    {
+        
+    }
+
+    private void SaveAndExit()
+    {
+
+    }
+
+    private void Win()
+    {
+
+    }
+
+    private void Lose()
+    {
+
+    }
+
+    private void FixedUpdate()
+    {
+        if (GameState == State.Play)
         {
-            counter -= tickInterval;
-            Map.Instance.Tick();
+            counter += Time.deltaTime;
+            while (counter >= tickInterval)
+            {
+                counter -= tickInterval;
+                Map.Instance.Tick();
+            }
+            Map.Instance.InterTick(counter / tickInterval);
         }
-        Map.Instance.InterTick(counter / tickInterval);
+
+        else if (GameState == State.Build)
+        {
+            Map.Instance.BuildModeUpdate();
+        }
+    }
+
+    public void ClearMobs()
+    {
+        foreach (Mob mob in mobs)
+        {
+            Destroy(mob.gameObject);
+        }
+        mobs.Clear();
     }
 
     public Mob ClosestMob(Vector3 position)

@@ -58,9 +58,9 @@ public class Structure : MonoBehaviour
     }
 
     public virtual void OnPlace() { }
+    public virtual void BuildModeUpdate(bool mapChanged) { }
     public virtual void EarlyTick() { }
     public virtual void Tick() { }
     public virtual void LateTick() { }
-
     public virtual void InterTick(float t) { }
 }

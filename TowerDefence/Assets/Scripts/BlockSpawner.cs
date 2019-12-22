@@ -23,7 +23,6 @@ public class BlockSpawner : Structure
     public void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
-        
     }
 
     public override void OnPlace()
@@ -38,12 +37,7 @@ public class BlockSpawner : Structure
 
     public void RecalculatePath()
     {
-        Node target = null;
-
-        if (Map.Instance.NearestBlockGoal(new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f), out BlockGoal goal))
-            target = goal.node;
-
-        path = PathFinding.PathFind(node, target, Map.PATHFINDING_MAX_DISTANCE, Map.PATHFINDING_MAX_TRIES, PathFinding.StandardCostFunction);
+        Map.Instance.NearestBlockGoal(node, out _, out path);
     }
 
     public void SetColor(Color color)
@@ -61,14 +55,16 @@ public class BlockSpawner : Structure
     {
         spawnCounter++;
 
+        if (Map.Instance.Changed)
+            RecalculatePath();
+
         if (spawnCounter >= spawnInterval)
         {
             spawnCounter = 0;
-            if (Map.Instance.Changed)
-                RecalculatePath();
             SpawnNext();
         }
     }
+
     public void OnDrawGizmosSelected()
     {
         PathFinding.DrawPath(path);
@@ -76,8 +72,9 @@ public class BlockSpawner : Structure
 
     private void SpawnNext()
     {
-        if (queue.Count > 0 && Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y, path))
+        if (queue.Count > 0 && Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y, out Block block))
         {
+            block.Path = new PathFinding.Path(path);
             queue.RemoveAt(0);
         }
         else

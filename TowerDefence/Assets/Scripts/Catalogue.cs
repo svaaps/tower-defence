@@ -35,7 +35,7 @@ public class Catalogue : MonoBehaviour
 
     public Structure PlaceStructurePrefab { get; set; }
 
-    public void Update()
+    public void FixedUpdate()
     {
         if (!EventSystem.current.IsPointerOverGameObject() && Input.GetMouseButtonDown(0) && Map.Instance.MouseNode != null)
         {
@@ -84,8 +84,6 @@ public class Catalogue : MonoBehaviour
             }
         }
     }
-
-    
 
     public void Start()
     {

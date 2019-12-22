@@ -32,16 +32,10 @@ public class Map : MonoBehaviour
 
     private bool changed;
 
-    public void Awake()
+    private void Awake()
     {
         instance = this;
         cam = Camera.main;
-    }
-    public void Start()
-    {
-        Generate();
-        BakeNavMesh();
-        CenterCamera();
     }
 
     public void Update()
@@ -59,13 +53,13 @@ public class Map : MonoBehaviour
     public void Tick()
     {
         Changed = changed;
+        changed = false;
 
         foreach (Node node in nodes)
         {
             if (node.structure != null && node.structure.placed)
                 node.structure.EarlyTick();
         }
-
         foreach (Node node in nodes)
         {
             if (node.structure != null && node.structure.placed)
@@ -74,7 +68,7 @@ public class Map : MonoBehaviour
 
         List<Block> blocks = new List<Block>();
 
-        foreach(Node node in nodes)
+        foreach (Node node in nodes)
         {
             if (node.block)
             {
@@ -127,7 +121,7 @@ public class Map : MonoBehaviour
             if (block.updated || block.moved)
                 continue;
 
-            if (block.Path.FoundPath)
+            if (block.Path.FoundPath && block.Path.Nodes.Count > 1)
             {
                 if (!block.Path.Nodes[1].block)
                 {
@@ -147,10 +141,12 @@ public class Map : MonoBehaviour
 
     public void InterTick(float t)
     {
+        if (nodes != null)
         foreach (Node node in nodes)
             if (node.structure != null && node.structure.placed)
                 node.structure.InterTick(t);
 
+        if (nodes != null)
         foreach (Node node in nodes)
         {
             if (!node.block)
@@ -165,10 +161,23 @@ public class Map : MonoBehaviour
         }
     }
 
+    public void BuildModeUpdate()
+    {
+        foreach(Node node in nodes)
+        {
+            if (node.structure)
+            {
+                node.structure.BuildModeUpdate(changed);
+            }
+        }
+        changed = false;
+    }
+
     public bool NearestBlock(Vector3 position, out Block nearest)
     {
         nearest = null;
         float sqDistance = float.MaxValue;
+        if (nodes != null)
         foreach(Node node in nodes)
         {
             if (!node.block)
@@ -203,6 +212,33 @@ public class Map : MonoBehaviour
         return nearest;
     }
 
+    public bool NearestBlockGoal(Node position, out BlockGoal nearest, out PathFinding.Path path)
+    {
+        path = new PathFinding.Path(PathFinding.PathResult.FailureNoPath);
+        nearest = null;
+
+        foreach(Node node in nodes)
+        {
+            if (!node.structure)
+                continue;
+            if (!(node.structure is BlockGoal))
+                continue;
+
+            PathFinding.Path thisPath = PathFinding.PathFind(position, node, PATHFINDING_MAX_DISTANCE, PATHFINDING_MAX_TRIES, PathFinding.StandardCostFunction);
+
+            if (thisPath.FoundPath)
+            {
+                if (nearest == null || thisPath.TotalCost(PathFinding.StandardCostFunction) < path.TotalCost(PathFinding.StandardCostFunction))
+                {
+                    nearest = node.structure as BlockGoal;
+                    path = thisPath;
+                }
+            }
+        }
+
+        return nearest;
+    }
+
     [ContextMenu("Center Camera")]
     public void CenterCamera()
     {
@@ -211,36 +247,22 @@ public class Map : MonoBehaviour
         cam.transform.position -= cam.transform.forward * 20;
     }
 
-    public bool AddBlock(Block prefab, int x, int y)
+    public bool AddBlock(Block prefab, int x, int y, out Block block)
     {
+        block = null;
         if (x < 0 || y < 0 || x >= size.x || y >= size.y)
             return false;
 
         if (nodes[x, y].block != null)
             return false;
 
-        nodes[x, y].block = Instantiate(prefab);
-        nodes[x, y].block.Init(x, y);
+        block = nodes[x, y].block = Instantiate(prefab);
+        block.Init(x, y);
         
         return true;
     }
 
-    public bool AddBlock(Block prefab, int x, int y, PathFinding.Path path)
-    {
-        if (x < 0 || y < 0 || x >= size.x || y >= size.y)
-            return false;
-
-        if (nodes[x, y].block != null)
-            return false;
-
-        nodes[x, y].block = Instantiate(prefab);
-        nodes[x, y].block.Init(x, y);
-        nodes[x, y].block.Path = new PathFinding.Path(path);
-
-        return true;
-    }
-
-    public Node GetNode(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y ? null : nodes[x, y];
+    public Node GetNode(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y || nodes == null ? null : nodes[x, y];
     public Wall GetWall(int x, int y, bool vertical) => x < 0 || y < 0 || x >= size.x + 1 || y >= size.y + 1 ? null : vertical ? verticalWalls[x, y] : horizontalWalls[x, y];
 
     public Wall GetNorthWall(int x, int y)
@@ -288,8 +310,9 @@ public class Map : MonoBehaviour
         horizontalWalls= new Wall[size.x, size.y + 1];
         nodes = new Node[size.x, size.y];
     }
+
     [ContextMenu("Clear")]
-    private void Clear()
+    public void Clear()
     {
         if (verticalWalls != null)
         {
@@ -325,6 +348,33 @@ public class Map : MonoBehaviour
         InitArrays();
     }
 
+    public void ClearBlocks()
+    {
+        if (nodes != null)
+        foreach(Node node in nodes)
+        {
+            if (node.block)
+            {
+                Destroy(node.block.gameObject);
+                node.block = null;
+            }
+        }
+    }
+
+    public void ClearStructures(bool sudo)
+    {
+        if (nodes != null)
+            foreach(Node node in nodes)
+            {
+                if (node.structure && (node.structure.isRemovable || sudo))
+                {
+                    Destroy(node.structure.gameObject);
+                    node.structure = null;
+                    DeclareMapChanged();
+                }
+            }
+    }
+
     [ContextMenu("Generate")]
     public void Generate()
     {
@@ -355,27 +405,9 @@ public class Map : MonoBehaviour
                 if (t) t.EastNeighbour = e;
                 if (e) e.WestNeighbour = t;
             }
-    }
 
-    private void IdentifyNeighbours(int x, int y)
-    {
-        Node t = GetNode(x, y);
-        Node n = GetNode(x, y + 1);
-        Node e = GetNode(x + 1, y);
-        Node s = GetNode(x, y - 1);
-        Node w = GetNode(x - 1, y);
-
-        if (t) t.NorthNeighbour = n;
-        if (n) n.SouthNeighbour = t;
-
-        if (t) t.EastNeighbour = e;
-        if (e) e.WestNeighbour = t;
-
-        if (t) t.SouthNeighbour = s;
-        if (s) s.NorthNeighbour = t;
-
-        if (t) t.WestNeighbour = w;
-        if (w) w.EastNeighbour = t;
+        BakeNavMesh();
+        CenterCamera();
     }
 
     public bool PlaceStructure(Structure prefab, int x, int y, int rotation, out Structure structure, bool sudo = false)
@@ -394,7 +426,7 @@ public class Map : MonoBehaviour
 
             Destroy(nodes[x, y].structure.gameObject);
             nodes[x, y] = null;
-            changed = true;
+            DeclareMapChanged();
         }
 
         if (prefab == null)
@@ -405,7 +437,7 @@ public class Map : MonoBehaviour
         structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         structure.Rotation = rotation;
         nodes[x, y].structure = structure;
-        changed = true;
+        DeclareMapChanged();
         //BakeNavMesh();
         return true;
     }
@@ -416,7 +448,6 @@ public class Map : MonoBehaviour
         {
             if (x < 0 || y < 0 || x >= size.x + 1 || y >= size.y)
                 return false;
-
         }
         else
         {
@@ -439,7 +470,7 @@ public class Map : MonoBehaviour
                 verticalWalls[x, y] = null;
             else
                 horizontalWalls[x, y] = null;
-            changed = true;
+            DeclareMapChanged();
         }
 
         if (prefab == null)
@@ -453,7 +484,7 @@ public class Map : MonoBehaviour
         if (vertical)
         {
             verticalWalls[x, y] = wall;
-            Changed = true;
+            DeclareMapChanged();
             if (wall)
             {
                 wall.transform.localPosition = new Vector3(x, 0, y + 0.5f);
@@ -486,7 +517,7 @@ public class Map : MonoBehaviour
 
         Destroy(nodes[x, y].structure.gameObject);
         nodes[x, y].structure = null;
-        changed = true;
+        DeclareMapChanged();
         return true;
     }
 
@@ -516,7 +547,7 @@ public class Map : MonoBehaviour
             verticalWalls[x, y] = null;
         else
             horizontalWalls[x, y] = null;
-        changed = true;
+        DeclareMapChanged();
 
         return true;
     }
@@ -567,7 +598,6 @@ public class Map : MonoBehaviour
         Gizmos.color = Color.red;
         DrawTile(tileX, tileZ);
     }
-    
 
     public static void DrawTile(int x, int z)
     {

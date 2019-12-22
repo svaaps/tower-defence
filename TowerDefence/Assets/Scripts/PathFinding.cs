@@ -70,6 +70,11 @@ public class PathFinding : MonoBehaviour
             CrowFliesDistance = path.CrowFliesDistance;
             Steps = path.Steps;
         }
+
+        public float TotalCost(CostFunction function)
+        {
+            return function(Distance, Cost, CrowFliesDistance, Steps);
+        }
     }
 
     
