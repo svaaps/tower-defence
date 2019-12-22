@@ -30,6 +30,8 @@ public class Map : MonoBehaviour
     public Vector2Int Size => size;
     public bool Changed { get; private set; }
 
+    private bool changed;
+
     public void Awake()
     {
         instance = this;
@@ -42,8 +44,6 @@ public class Map : MonoBehaviour
         CenterCamera();
     }
 
-
-
     public void Update()
     {
         MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
@@ -53,11 +53,13 @@ public class Map : MonoBehaviour
 
     public void DeclareMapChanged()
     {
-        Changed = true;
+        changed = true;
     }
 
     public void Tick()
     {
+        Changed = changed;
+
         foreach (Node node in nodes)
         {
             if (node.structure != null && node.structure.placed)
@@ -81,7 +83,7 @@ public class Map : MonoBehaviour
                 node.block.moving = false;
                 node.block.updated = false;
                 blocks.Add(node.block);
-               // if (Changed)
+                if (Changed)
                     node.block.RecalculatePath();
             }
         }
@@ -93,7 +95,7 @@ public class Map : MonoBehaviour
                 if (block.updated || block.moved)
                     continue;
 
-                if (block.Path.FoundPath)
+                if (block.Path.FoundPath && block.Path.Nodes.Count > 1)
                 {
                     if (!block.Path.Nodes[1].block)
                     {
@@ -141,8 +143,6 @@ public class Map : MonoBehaviour
             if (node.structure != null && node.structure.placed)
                 node.structure.LateTick();
         }
-
-        Changed = false;
     }
 
     public void InterTick(float t)
@@ -235,7 +235,7 @@ public class Map : MonoBehaviour
 
         nodes[x, y].block = Instantiate(prefab);
         nodes[x, y].block.Init(x, y);
-        nodes[x, y].block.Path = path;
+        nodes[x, y].block.Path = new PathFinding.Path(path);
 
         return true;
     }
@@ -394,7 +394,7 @@ public class Map : MonoBehaviour
 
             Destroy(nodes[x, y].structure.gameObject);
             nodes[x, y] = null;
-            Changed = true;
+            changed = true;
         }
 
         if (prefab == null)
@@ -405,7 +405,7 @@ public class Map : MonoBehaviour
         structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         structure.Rotation = rotation;
         nodes[x, y].structure = structure;
-        Changed = true;
+        changed = true;
         //BakeNavMesh();
         return true;
     }
@@ -439,7 +439,7 @@ public class Map : MonoBehaviour
                 verticalWalls[x, y] = null;
             else
                 horizontalWalls[x, y] = null;
-            Changed = true;
+            changed = true;
         }
 
         if (prefab == null)
@@ -486,7 +486,7 @@ public class Map : MonoBehaviour
 
         Destroy(nodes[x, y].structure.gameObject);
         nodes[x, y].structure = null;
-        Changed = true;
+        changed = true;
         return true;
     }
 
@@ -516,7 +516,7 @@ public class Map : MonoBehaviour
             verticalWalls[x, y] = null;
         else
             horizontalWalls[x, y] = null;
-        Changed = true;
+        changed = true;
 
         return true;
     }

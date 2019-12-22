@@ -69,6 +69,10 @@ public class BlockSpawner : Structure
             SpawnNext();
         }
     }
+    public void OnDrawGizmosSelected()
+    {
+        PathFinding.DrawPath(path);
+    }
 
     private void SpawnNext()
     {

@@ -117,7 +117,7 @@ public class Block : MonoBehaviour
         Path = PathFinding.PathFind(Current, Target, Map.PATHFINDING_MAX_DISTANCE, Map.PATHFINDING_MAX_TRIES, CostFunction());
     }
 
-    public void OnDrawGizmos()
+    public void OnDrawGizmosSelected()
     {
         PathFinding.DrawPath(Path);
     }

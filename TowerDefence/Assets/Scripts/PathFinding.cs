@@ -59,7 +59,20 @@ public class PathFinding : MonoBehaviour
             Cost = pathCost;
             Steps = pathSteps;
         }
+
+        public Path(Path path)
+        {
+            FoundPath = path.FoundPath;
+            Result = path.Result;
+            Nodes = path.Nodes == null ? null : new List<Node>(path.Nodes);
+            Distance = path.Distance;
+            Cost = path.Cost;
+            CrowFliesDistance = path.CrowFliesDistance;
+            Steps = path.Steps;
+        }
     }
+
+    
     public static float Distance(Node n1, Node n2)
     {
         return Distance(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y);
@@ -76,6 +89,7 @@ public class PathFinding : MonoBehaviour
 
     public static Path PathFind(Node start, Node end, float maxDistance, int maxTries, CostFunction costFunction)
     {
+        
         if (start == null || end == null)
             return new Path(PathResult.FailureNoPath);
 
