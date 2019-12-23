@@ -8,12 +8,8 @@ public class Node : MonoBehaviour
 {
     [HideInInspector]
     public Vector2Int pos;
-    //[HideInInspector]
-    public Node[] neighbours = new Node[4];
-
     [HideInInspector]
-    public Structure structure;
-
+    public Node[] neighbours;
     [HideInInspector]
     public float pathDistance, pathCost, pathCrowFliesDistance;
     [HideInInspector]
@@ -21,9 +17,9 @@ public class Node : MonoBehaviour
     [HideInInspector]
     public Node pathParent;
 
-    public Block block;
-    public float Cost => structure == null ? 0 : structure.cost;
-    public bool IsImpassable => structure != null && structure.isImpassable;
+    public virtual float Cost() => 0;
+    public virtual bool IsImpassable() => false;
+    public virtual bool ExitBlocked(int direction) => false;
 
     public void ClearPathFindingData()
     {
@@ -40,7 +36,7 @@ public class Node : MonoBehaviour
     {
         pos = new Vector2Int(x, y);
         transform.localPosition = new Vector3(x, 0, y);
-        neighbours = new Node[4];
+        neighbours = new Node[8];
     }
 
     public Node NorthNeighbour
@@ -49,22 +45,42 @@ public class Node : MonoBehaviour
         set => neighbours[0] = value;
     }
 
-    public Node EastNeighbour
+    public Node NorthEastNeighbour
     {
         get => neighbours[1];
         set => neighbours[1] = value;
     }
 
-    public Node SouthNeighbour
+    public Node EastNeighbour
     {
         get => neighbours[2];
         set => neighbours[2] = value;
     }
-
-    public Node WestNeighbour
+    public Node SouthEastNeighbour
     {
         get => neighbours[3];
         set => neighbours[3] = value;
+    }
+    public Node SouthNeighbour
+    {
+        get => neighbours[4];
+        set => neighbours[4] = value;
+    }
+    public Node SouthWestNeighbour
+    {
+        get => neighbours[5];
+        set => neighbours[5] = value;
+    }
+
+    public Node WestNeighbour
+    {
+        get => neighbours[6];
+        set => neighbours[6] = value;
+    }
+    public Node NorthWestNeighbour
+    {
+        get => neighbours[7];
+        set => neighbours[7] = value;
     }
 
     public void DetachNeighbours()
@@ -75,10 +91,22 @@ public class Node : MonoBehaviour
             NorthNeighbour = null;
         }
 
+        if (NorthEastNeighbour != null)
+        {
+            NorthEastNeighbour.SouthWestNeighbour = null;
+            NorthEastNeighbour = null;
+        }
+
         if (EastNeighbour != null)
         {
             EastNeighbour.WestNeighbour = null;
             EastNeighbour = null;
+        }
+
+        if (SouthEastNeighbour != null)
+        {
+            SouthEastNeighbour.NorthWestNeighbour = null;
+            SouthEastNeighbour = null;
         }
 
         if (SouthNeighbour != null)
@@ -87,10 +115,22 @@ public class Node : MonoBehaviour
             SouthNeighbour = null;
         }
 
+        if (SouthWestNeighbour != null)
+        {
+            SouthWestNeighbour.NorthEastNeighbour = null;
+            SouthWestNeighbour = null;
+        }
+
         if (WestNeighbour != null)
         {
             WestNeighbour.EastNeighbour = null;
             WestNeighbour = null;
+        }
+
+        if (NorthWestNeighbour != null)
+        {
+            NorthWestNeighbour.SouthEastNeighbour = null;
+            NorthWestNeighbour = null;
         }
     }
 

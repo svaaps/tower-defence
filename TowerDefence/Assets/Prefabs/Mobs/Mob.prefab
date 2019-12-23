@@ -161,7 +161,11 @@ MonoBehaviour:
   life: 10
   minimumRigidbodyVelocity: 3
   updatePathInterval: 0.1
-  updatePathMinimumDistanceSquared: 0.2
+  updatePathMinimumDistanceSquared: 0
+  attackRange: 1
+  attackInterval: 0.5
+  attackDamage: 1
+  blockAggroRange: 5
 --- !u!195 &2097166228200340716
 NavMeshAgent:
   m_ObjectHideFlags: 0

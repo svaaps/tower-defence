@@ -40,6 +40,8 @@ public class Game : MonoBehaviour
     private Mob mobPrefab;
 
     private List<Mob> mobs = new List<Mob>();
+    [SerializeField]
+    private Transform mobContainer;
 
     private void Awake()
     {
@@ -230,7 +232,7 @@ public class Game : MonoBehaviour
     {
         if (prefab == null)
             return;
-        mobs.Add(Instantiate(prefab, position, Quaternion.identity));
+        mobs.Add(Instantiate(prefab, position, Quaternion.identity, mobContainer));
     }
 
     public void RemoveMob(Mob instance)

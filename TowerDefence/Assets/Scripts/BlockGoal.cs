@@ -15,10 +15,10 @@ public class BlockGoal : Structure
             sunk = false;
         }
 
-        if (node.block != null && sinkingBlock == null)
+        if (tile.block != null && sinkingBlock == null)
         {
-            sinkingBlock = node.block;
-            node.block = null;
+            sinkingBlock = tile.block;
+            tile.block = null;
         }
     }
 

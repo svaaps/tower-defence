@@ -1840,6 +1840,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1304624805}
   m_CullTransparentMesh: 0
+--- !u!1 &1312791545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1312791546}
+  m_Layer: 0
+  m_Name: Mobs
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1312791546
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1312791545}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1344469350
 GameObject:
   m_ObjectHideFlags: 0
@@ -1993,6 +2023,7 @@ GameObject:
   - component: {fileID: 1455574752}
   - component: {fileID: 1455574751}
   - component: {fileID: 1455574753}
+  - component: {fileID: 1455574754}
   m_Layer: 0
   m_Name: Map
   m_TagString: Untagged
@@ -2013,8 +2044,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: {x: 32, y: 32}
-  emptyNodePrefab: {fileID: 982002650844207417, guid: a64687ffbeed19b4d8cb5f98608783dc,
+  tilePrefab: {fileID: -7194407778278406860, guid: a64687ffbeed19b4d8cb5f98608783dc,
     type: 3}
+  blockContainer: {fileID: 1726666698}
   navMeshBuildSettings:
     agentRadius: 0.1
     agentHeight: 1
@@ -2048,9 +2080,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94b28de406dbe284c89e816310930d62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tickInterval: 0.25
+  tickInterval: 0.5
   mobPrefab: {fileID: 1997651016698371908, guid: c7916ec9c0031164193555accee780e6,
     type: 3}
+  mobContainer: {fileID: 1312791546}
+--- !u!114 &1455574754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1455574750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b259b6f6812a224d94e8115ceba145b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 0.1
+  materials:
+  - {fileID: 2100000, guid: 0a5a2540b9ff60343939f0e85f21399b, type: 2}
+  - {fileID: 2100000, guid: 88bd205d239bcba42bec019358e7cde4, type: 2}
+  - {fileID: 2100000, guid: 0483a3d9b63f0124591c044037209f44, type: 2}
+  - {fileID: 2100000, guid: 252b641daa06ced4cb96b313aa742da0, type: 2}
+  - {fileID: 2100000, guid: 252b641daa06ced4cb96b313aa742da0, type: 2}
+  - {fileID: 2100000, guid: 9378da60903e5f249ad37ba597777bae, type: 2}
+  - {fileID: 2100000, guid: 5894a28da4f647d4f810e0bd7ac92168, type: 2}
+  nameID: _EmissionColor
+  initial: {r: 1.4980392, g: 0, b: 0, a: 1}
 --- !u!1 &1666031479
 GameObject:
   m_ObjectHideFlags: 0
@@ -2128,6 +2184,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1666031479}
   m_CullTransparentMesh: 0
+--- !u!1 &1726666697
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1726666698}
+  m_Layer: 0
+  m_Name: Blocks
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1726666698
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1726666697}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1733877451
 GameObject:
   m_ObjectHideFlags: 0
@@ -2312,6 +2398,8 @@ MonoBehaviour:
   - {fileID: 8939481592181898184, guid: e88f5273e7086694c9eb5de5062d4a77, type: 3}
   - {fileID: 2293182688855539171, guid: 70918c46b556de24f9d57c7a851c3a15, type: 3}
   - {fileID: 2258167317634239352, guid: b52564864077f8342b182c1b6197ed61, type: 3}
+  - {fileID: 4977827924641741028, guid: 4ca2c4b1dfb78564082932471e8039a8, type: 3}
+  - {fileID: 4897975171971060997, guid: 7b9d844638cb847418c9c45d6b4f90ba, type: 3}
   itemPrefab: {fileID: 2547154672788782943, guid: 2b3087c1b66ff4b47ac18f1e7ce81d2b,
     type: 3}
   thumbnailSize: 128

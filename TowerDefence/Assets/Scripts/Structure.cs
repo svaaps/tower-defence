@@ -8,22 +8,25 @@ using UnityEngine.SceneManagement;
 [System.Serializable]
 public class Structure : MonoBehaviour
 {
+    public float life;
     public float cost;
     public bool canBeBuiltOver;
     public bool isRemovable;
     public bool isObstacle;
     public bool isImpassable;
+    public bool isInvincible;
     public bool northExitBlocked;
     public bool eastExitBlocked;
     public bool southExitBlocked;
     public bool westExitBlocked;
     public int height = 1;
+    private bool dead;
     [HideInInspector]
     public bool placed;
     [HideInInspector]
     public Texture2D thumbnail;
     [HideInInspector]
-    public Node node;
+    public Tile tile;
     private int rotation;
 
     public bool ExitBlocked(int direction)
@@ -58,9 +61,28 @@ public class Structure : MonoBehaviour
     }
 
     public virtual void OnPlace() { }
+    public virtual void OnDeath() { }
     public virtual void BuildModeUpdate(bool mapChanged) { }
     public virtual void EarlyTick() { }
     public virtual void Tick() { }
     public virtual void LateTick() { }
     public virtual void InterTick(float t) { }
+
+    public void AddDamage(float amount)
+    {
+        if (isInvincible)
+            return;
+
+        if (dead)
+            return;
+
+        life -= amount;
+    
+        if (life <= 0)
+        {
+            dead = true;
+            OnDeath();
+            Map.Instance.DeleteStructure(tile.pos.x, tile.pos.y, true);
+        }
+    }
 }

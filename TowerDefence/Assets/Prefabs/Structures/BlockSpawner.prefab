@@ -143,11 +143,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d239b49687dfbf64a974fda8f2d10da0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  life: 0
   cost: 0
   canBeBuiltOver: 0
   isRemovable: 1
   isObstacle: 1
   isImpassable: 1
+  isInvincible: 0
   northExitBlocked: 0
   eastExitBlocked: 1
   southExitBlocked: 1
@@ -155,7 +157,7 @@ MonoBehaviour:
   height: 1
   placed: 0
   thumbnail: {fileID: 0}
-  node: {fileID: 0}
+  tile: {fileID: 0}
   spawnInterval: 4
   spawnLoop: 1
   spawnQueue:

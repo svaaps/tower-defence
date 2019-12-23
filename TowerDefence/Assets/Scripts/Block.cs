@@ -23,14 +23,19 @@ public class Block : MonoBehaviour
     private int color;
 
     [SerializeField]
-    private int life;
+    private float life;
+
+    [SerializeField]
+    private bool isInvincible;
+
+    private bool dead;
 
     private float despawnTimer;
     public Color Color => GetColor(color);
     public PathFinding.Path Path { get; set; }
-    public int Life { get => life; set => life = value; }
-    public Node Target { get; private set; }
-    public Node Current { get; private set; }
+    public float Life { get => life; set => life = value; }
+    public Tile Target { get; private set; }
+    public Tile Current { get; private set; }
 
     public int prevX;
     public int prevY;
@@ -51,7 +56,7 @@ public class Block : MonoBehaviour
     public void Init(int x, int y)
     {
         transform.position = new Vector3(x + 0.5f, 0, y + 0.5f);
-        Current = Map.Instance.GetNode(x, y);
+        Current = Map.Instance.GetTile(x, y);
         prevX = x;
         prevY = y;
     }
@@ -59,7 +64,7 @@ public class Block : MonoBehaviour
     public void Update()
     {
         if (Input.GetKeyDown(KeyCode.T))
-            Target = Map.Instance.MouseNode;
+            Target = Map.Instance.MouseTile;
 
         if (Current == null || Current.block != this)
         {
@@ -87,7 +92,7 @@ public class Block : MonoBehaviour
         if (Path.Nodes.Count < 2)
             return;
 
-        Node next = Path.Nodes[1];
+        Tile next = Path.Nodes[1] as Tile;
         if (next == null)
             return;
 
@@ -111,7 +116,7 @@ public class Block : MonoBehaviour
         if (Map.Instance.NearestBlockGoal(Current, out BlockGoal goal, out PathFinding.Path path))
         {
             Path = path;
-            Target = goal.node;
+            Target = goal.tile;
         }
     }
 
@@ -123,5 +128,25 @@ public class Block : MonoBehaviour
     public virtual PathFinding.CostFunction CostFunction()
     {
         return PathFinding.StandardCostFunction;
+    }
+
+    public virtual void AddDamage(float amount)
+    {
+        if (isInvincible)
+            return;
+
+        if (dead)
+            return;
+
+        life -= amount;
+        if (life <= 0)
+        {
+            OnDeath();
+            Map.Instance.RemoveBlock(this);
+        }
+    }
+    public virtual void OnDeath()
+    {
+
     }
 }

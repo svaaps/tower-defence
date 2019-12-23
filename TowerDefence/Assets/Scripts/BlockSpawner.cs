@@ -48,7 +48,7 @@ public class BlockSpawner : Structure
     {
         if (!placed)
             return;
-        Map.Instance.NearestBlockGoal(node, out _, out path);
+        Map.Instance.NearestBlockGoal(tile, out _, out path);
         pathLineMesh.SetPoints(path);
     }
 
@@ -84,7 +84,7 @@ public class BlockSpawner : Structure
 
     private void SpawnNext()
     {
-        if (queue.Count > 0 && Map.Instance.AddBlock(queue[0], node.pos.x, node.pos.y, out Block block))
+        if (queue.Count > 0 && Map.Instance.AddBlock(queue[0], tile.pos.x, tile.pos.y, out Block block))
         {
             block.Path = new PathFinding.Path(path);
             queue.RemoveAt(0);

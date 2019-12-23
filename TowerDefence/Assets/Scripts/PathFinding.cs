@@ -120,7 +120,7 @@ public class PathFinding : MonoBehaviour
         if (start == null || end == null)
             return new Path(PathResult.FailureNoPath);
 
-        if (end.IsImpassable)
+        if (end.IsImpassable())
             return new Path(PathResult.FailureNoPath);
 
         if (start == end)
@@ -206,9 +206,9 @@ public class PathFinding : MonoBehaviour
 
                 if (neighbour == null) 
                     continue;
-                if (neighbour.IsImpassable) 
+                if (neighbour.IsImpassable()) 
                     continue;
-                if (currentNode.structure != null && currentNode.structure.ExitBlocked(i))
+                if (currentNode.ExitBlocked(i / 2))
                     continue;
 
                 float distance = 1;//i % 2 == 0 ? 1 : ROOT_2;//currentNode.distances[i];
@@ -225,7 +225,7 @@ public class PathFinding : MonoBehaviour
                 {
                     neighbour.pathDistance = nextG;
                     neighbour.pathCrowFliesDistance = Distance(neighbour, end);
-                    neighbour.pathCost = currentNode.pathCost + neighbour.Cost;// + GetWallCost(currentNode.pos.x, currentNode.pos.y, i);
+                    neighbour.pathCost = currentNode.pathCost + neighbour.Cost();// + GetWallCost(currentNode.pos.x, currentNode.pos.y, i);
                     neighbour.pathSteps = currentNode.pathSteps + 1;
                     neighbour.pathParent = currentNode;
                     neighbour.pathTurns = currentNode.pathTurns + (currentNode.pathEndDirection == i ? 0 : 1);

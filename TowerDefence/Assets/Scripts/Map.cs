@@ -15,18 +15,21 @@ public class Map : MonoBehaviour
 
     private Wall[,] verticalWalls;
     private Wall[,] horizontalWalls;
-    private Node[,] nodes;
+    private Tile[,] tiles;
 
     [SerializeField]
     private Vector2Int size;
 
     [SerializeField]
-    private Node emptyNodePrefab;
+    private Tile tilePrefab;
+
+    [SerializeField]
+    private Transform blockContainer;
 
     private Camera cam;
     public Vector3 MousePlane { get; private set; }
-    public Node MouseNode { get; private set; }
-    public Vector2Int MouseTile { get; private set; }
+    public Tile MouseTile { get; private set; }
+    public Vector2Int MouseCoord { get; private set; }
     public Vector2Int Size => size;
     public bool Changed { get; private set; }
 
@@ -41,8 +44,8 @@ public class Map : MonoBehaviour
     public void Update()
     {
         MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
-        MouseTile = new Vector2Int(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
-        MouseNode = GetNode(MouseTile.x, MouseTile.y);
+        MouseCoord = new Vector2Int(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
+        MouseTile = GetTile(MouseCoord.x, MouseCoord.y);
     }
 
     public void DeclareMapChanged()
@@ -55,30 +58,30 @@ public class Map : MonoBehaviour
         Changed = changed;
         changed = false;
 
-        foreach (Node node in nodes)
+        foreach (Tile tile in tiles)
         {
-            if (node.structure != null && node.structure.placed)
-                node.structure.EarlyTick();
+            if (tile.structure != null && tile.structure.placed)
+                tile.structure.EarlyTick();
         }
-        foreach (Node node in nodes)
+        foreach (Tile tile in tiles)
         {
-            if (node.structure != null && node.structure.placed)
-                node.structure.Tick();
+            if (tile.structure != null && tile.structure.placed)
+                tile.structure.Tick();
         }
 
         List<Block> blocks = new List<Block>();
 
-        foreach (Node node in nodes)
+        foreach (Tile tile in tiles)
         {
-            if (node.block)
+            if (tile.block)
             {
-                node.block.waiting = false;
-                node.block.moved = false;
-                node.block.moving = false;
-                node.block.updated = false;
-                blocks.Add(node.block);
+                tile.block.waiting = false;
+                tile.block.moved = false;
+                tile.block.moving = false;
+                tile.block.updated = false;
+                blocks.Add(tile.block);
                 if (Changed)
-                    node.block.RecalculatePath();
+                    tile.block.RecalculatePath();
             }
         }
 
@@ -91,13 +94,15 @@ public class Map : MonoBehaviour
 
                 if (block.Path.FoundPath && block.Path.Nodes.Count > 1)
                 {
-                    if (!block.Path.Nodes[1].block)
+                    Tile tile = block.Path.Nodes[1] as Tile;
+
+                    if (!tile.block)
                     {
                         block.moving = true;
                         block.GoToNext();
                         block.updated = true;
                     }
-                    else if (!block.Path.Nodes[1].block.moved)
+                    else if (!tile.block.moved)
                     {
                         block.waiting = true;
                     }
@@ -123,7 +128,7 @@ public class Map : MonoBehaviour
 
             if (block.Path.FoundPath && block.Path.Nodes.Count > 1)
             {
-                if (!block.Path.Nodes[1].block)
+                if (!(block.Path.Nodes[1] as Tile).block)
                 {
                     block.moving = true;
                     block.GoToNext();
@@ -132,60 +137,82 @@ public class Map : MonoBehaviour
             }
         }
 
-        foreach (Node node in nodes)
+        foreach (Tile tile in tiles)
         {
-            if (node.structure != null && node.structure.placed)
-                node.structure.LateTick();
+            if (tile.structure != null && tile.structure.placed)
+                tile.structure.LateTick();
         }
     }
 
     public void InterTick(float t)
     {
-        if (nodes != null)
-        foreach (Node node in nodes)
-            if (node.structure != null && node.structure.placed)
-                node.structure.InterTick(t);
+        if (tiles != null)
+        foreach (Tile tile in tiles)
+            if (tile.structure != null && tile.structure.placed)
+                tile.structure.InterTick(t);
 
-        if (nodes != null)
-        foreach (Node node in nodes)
+        if (tiles != null)
+        foreach (Tile tile in tiles)
         {
-            if (!node.block)
+            if (!tile.block)
                 continue;
 
-            if (!node.block.moving)
+            if (!tile.block.moving)
                 continue;
 
             //node.block.angle = t * 90 - node.block.angle;
-            Vector3 lerp = Vector3.Lerp(new Vector3(node.block.prevX + 0.5f, 0, node.block.prevY + 0.5f), new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f), t);
-            node.block.transform.position = lerp;
+            Vector3 lerp = Vector3.Lerp(new Vector3(tile.block.prevX + 0.5f, 0, tile.block.prevY + 0.5f), new Vector3(tile.pos.x + 0.5f, 0, tile.pos.y + 0.5f), t);
+            tile.block.transform.position = lerp;
         }
     }
 
     public void BuildModeUpdate()
     {
-        foreach(Node node in nodes)
+        foreach(Tile tile in tiles)
         {
-            if (node.structure)
+            if (tile.structure)
             {
-                node.structure.BuildModeUpdate(changed);
+                tile.structure.BuildModeUpdate(changed);
             }
         }
         changed = false;
     }
 
-    public bool NearestBlock(Vector3 position, out Block nearest)
+    public bool NearestBlock(Vector3 position, float maxRange, out Block nearest)
     {
         nearest = null;
         float sqDistance = float.MaxValue;
-        if (nodes != null)
-        foreach(Node node in nodes)
+        if (tiles != null)
+        foreach(Tile tile in tiles)
         {
-            if (!node.block)
+            if (!tile.block)
                 continue;
-            float d = SquareDistance(position, node.block.transform.position);
+            float d = SquareDistance(position, tile.block.transform.position);
+            if (d > maxRange * maxRange)
+                continue;
             if (nearest == null || sqDistance > d)
             {
-                nearest = node.block;
+                nearest = tile.block;
+                sqDistance = d;
+            }
+        }
+        return nearest;
+    }
+
+    public bool NearestStructure<T>(Vector3 position, out T nearest) where T : Structure
+    {
+        nearest = null;
+        float sqDistance = float.MaxValue;
+        foreach (Tile tile in tiles)
+        {
+            if (!tile.structure)
+                continue;
+            if (!(tile.structure is T))
+                continue;
+            float d = SquareDistance(position, new Vector3(tile.pos.x + 0.5f, 0, tile.pos.y + 0.5f));
+            if (nearest == null || sqDistance > d)
+            {
+                nearest = tile.structure as T;
                 sqDistance = d;
             }
         }
@@ -196,41 +223,41 @@ public class Map : MonoBehaviour
     {
         nearest = null;
         float sqDistance = float.MaxValue;
-        foreach(Node node in nodes)
+        foreach(Tile tile in tiles)
         {
-            if (!node.structure)
+            if (!tile.structure)
                 continue;
-            if (!(node.structure is BlockGoal))
+            if (!(tile.structure is BlockGoal))
                 continue;
-            float d = SquareDistance(position, new Vector3(node.pos.x + 0.5f, 0, node.pos.y + 0.5f));
+            float d = SquareDistance(position, new Vector3(tile.pos.x + 0.5f, 0, tile.pos.y + 0.5f));
             if (nearest == null || sqDistance > d)
             {
-                nearest = node.structure as BlockGoal;
+                nearest = tile.structure as BlockGoal;
                 sqDistance = d;
             }
         }
         return nearest;
     }
 
-    public bool NearestBlockGoal(Node position, out BlockGoal nearest, out PathFinding.Path path)
+    public bool NearestBlockGoal(Tile position, out BlockGoal nearest, out PathFinding.Path path)
     {
         path = new PathFinding.Path(PathFinding.PathResult.FailureNoPath);
         nearest = null;
 
-        foreach(Node node in nodes)
+        foreach(Tile tile in tiles)
         {
-            if (!node.structure)
+            if (!tile.structure)
                 continue;
-            if (!(node.structure is BlockGoal))
+            if (!(tile.structure is BlockGoal))
                 continue;
 
-            PathFinding.Path thisPath = PathFinding.PathFind(position, node, PATHFINDING_MAX_DISTANCE, PATHFINDING_MAX_TRIES, PathFinding.StandardCostFunction);
+            PathFinding.Path thisPath = PathFinding.PathFind(position, tile, PATHFINDING_MAX_DISTANCE, PATHFINDING_MAX_TRIES, PathFinding.StandardCostFunction);
 
             if (thisPath.FoundPath)
             {
                 if (nearest == null || thisPath.TotalCost(PathFinding.StandardCostFunction) < path.TotalCost(PathFinding.StandardCostFunction))
                 {
-                    nearest = node.structure as BlockGoal;
+                    nearest = tile.structure as BlockGoal;
                     path = thisPath;
                 }
             }
@@ -253,16 +280,29 @@ public class Map : MonoBehaviour
         if (x < 0 || y < 0 || x >= size.x || y >= size.y)
             return false;
 
-        if (nodes[x, y].block != null)
+        if (tiles[x, y].block != null)
             return false;
 
-        block = nodes[x, y].block = Instantiate(prefab);
+        block = tiles[x, y].block = Instantiate(prefab, blockContainer);
         block.Init(x, y);
         
         return true;
     }
 
-    public Node GetNode(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y || nodes == null ? null : nodes[x, y];
+    public bool RemoveBlock(Block block)
+    {
+        if (block == null)
+            return false;
+
+        if (block.Current)
+            block.Current.block = null;
+        
+        Destroy(block.gameObject);
+
+        return true;
+    }
+
+    public Tile GetTile(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y || tiles == null ? null : tiles[x, y];
     public Wall GetWall(int x, int y, bool vertical) => x < 0 || y < 0 || x >= size.x + 1 || y >= size.y + 1 ? null : vertical ? verticalWalls[x, y] : horizontalWalls[x, y];
 
     public Wall GetNorthWall(int x, int y)
@@ -308,7 +348,7 @@ public class Map : MonoBehaviour
     {
         verticalWalls = new Wall[size.x + 1, size.y];
         horizontalWalls= new Wall[size.x, size.y + 1];
-        nodes = new Node[size.x, size.y];
+        tiles = new Tile[size.x, size.y];
     }
 
     [ContextMenu("Clear")]
@@ -332,13 +372,13 @@ public class Map : MonoBehaviour
                     DestroyImmediate(horizontalWalls[x, y].gameObject);
                 }
         }
-        if (nodes != null)
+        if (tiles != null)
         {
-            for (int y = 0; y < nodes.GetLength(1); y++)
-                for (int x = 0; x < nodes.GetLength(0); x++)
+            for (int y = 0; y < tiles.GetLength(1); y++)
+                for (int x = 0; x < tiles.GetLength(0); x++)
                 {
-                    if (nodes[x, y] != null)
-                        DestroyImmediate(nodes[x, y].gameObject);
+                    if (tiles[x, y] != null)
+                        DestroyImmediate(tiles[x, y].gameObject);
                 }
         }
 
@@ -350,26 +390,26 @@ public class Map : MonoBehaviour
 
     public void ClearBlocks()
     {
-        if (nodes != null)
-        foreach(Node node in nodes)
+        if (tiles != null)
+        foreach(Tile tile in tiles)
         {
-            if (node.block)
+            if (tile.block)
             {
-                Destroy(node.block.gameObject);
-                node.block = null;
+                Destroy(tile.block.gameObject);
+                tile.block = null;
             }
         }
     }
 
     public void ClearStructures(bool sudo)
     {
-        if (nodes != null)
-            foreach(Node node in nodes)
+        if (tiles != null)
+            foreach(Tile tile in tiles)
             {
-                if (node.structure && (node.structure.isRemovable || sudo))
+                if (tile.structure && (tile.structure.isRemovable || sudo))
                 {
-                    Destroy(node.structure.gameObject);
-                    node.structure = null;
+                    Destroy(tile.structure.gameObject);
+                    tile.structure = null;
                     DeclareMapChanged();
                 }
             }
@@ -385,20 +425,20 @@ public class Map : MonoBehaviour
             {
 
 #if UNITY_EDITOR
-                nodes[x, y] = PrefabUtility.InstantiatePrefab(emptyNodePrefab, transform) as Node;
+                tiles[x, y] = PrefabUtility.InstantiatePrefab(tilePrefab, transform) as Tile;
 #else
                 nodes[x, y] = Object.Instantiate(emptyNodePrefab, transform);
 #endif
 
-                nodes[x, y].Init(x, y);
+                tiles[x, y].Init(x, y);
             }
 
         for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
-                Node t = GetNode(x, y);
-                Node n = GetNode(x, y + 1);
-                Node e = GetNode(x + 1, y);
+                Tile t = GetTile(x, y);
+                Tile n = GetTile(x, y + 1);
+                Tile e = GetTile(x + 1, y);
 
                 if (t) t.NorthNeighbour = n;
                 if (n) n.SouthNeighbour = t;
@@ -416,27 +456,27 @@ public class Map : MonoBehaviour
         if (x < 0 || y < 0 || x >= size.x || y >= size.y)
             return false;
 
-        if (nodes[x, y].structure)
+        if (tiles[x, y].structure)
         {
-            if (!sudo && prefab != null && !nodes[x, y].structure.canBeBuiltOver)
+            if (!sudo && prefab != null && !tiles[x, y].structure.canBeBuiltOver)
                 return false;
 
-            if (!sudo && prefab == null && !nodes[x, y].structure.isRemovable)
+            if (!sudo && prefab == null && !tiles[x, y].structure.isRemovable)
                 return false;
 
-            Destroy(nodes[x, y].structure.gameObject);
-            nodes[x, y] = null;
+            Destroy(tiles[x, y].structure.gameObject);
+            tiles[x, y] = null;
             DeclareMapChanged();
         }
 
         if (prefab == null)
             return true;
 
-        structure = Instantiate(prefab, nodes[x, y].transform);
-        structure.node = nodes[x, y];
+        structure = Instantiate(prefab, tiles[x, y].transform);
+        structure.tile = tiles[x, y];
         structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         structure.Rotation = rotation;
-        nodes[x, y].structure = structure;
+        tiles[x, y].structure = structure;
         DeclareMapChanged();
         //BakeNavMesh();
         return true;
@@ -509,14 +549,14 @@ public class Map : MonoBehaviour
         if (x < 0 || y < 0 || x >= size.x || y >= size.y)
             return false;
 
-        if (!nodes[x, y].structure)
+        if (!tiles[x, y].structure)
             return false;
 
-        if (!sudo && !nodes[x, y].structure.isRemovable)
+        if (!sudo && !tiles[x, y].structure.isRemovable)
             return false;
 
-        Destroy(nodes[x, y].structure.gameObject);
-        nodes[x, y].structure = null;
+        Destroy(tiles[x, y].structure.gameObject);
+        tiles[x, y].structure = null;
         DeclareMapChanged();
         return true;
     }
@@ -572,11 +612,11 @@ public class Map : MonoBehaviour
         return SquareDistance(v1.x, v1.y, v2.x, v2.y);
     }
 
-    public Node ScreenPointToRayPlaneNode(Vector3 screenPos, float y, Camera camera)
+    public Tile ScreenPointToRayPlaneNode(Vector3 screenPos, float y, Camera camera)
     {
         Vector3 intersection = ScreenPointToRayPlaneIntersection(screenPos, y, camera);
 
-        return GetNode(Mathf.FloorToInt(intersection.x), Mathf.FloorToInt(intersection.z));
+        return GetTile(Mathf.FloorToInt(intersection.x), Mathf.FloorToInt(intersection.z));
     }
 
     public static Vector3 ScreenPointToRayPlaneIntersection(Vector3 screenPos, float y, Camera camera)
