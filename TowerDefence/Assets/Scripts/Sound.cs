@@ -29,9 +29,7 @@ public class Sound
     [ContextMenu("Randomize Pitch")]
     public float RandomizePitch()
     {
-        float r = Random.value;
-        r = pitchDistribution.Evaluate(r);
-        return pitch = r;
+        return pitchDistribution.Evaluate(Random.value);
     }
 
     public AudioSource ReadySource()
@@ -41,10 +39,7 @@ public class Sound
             if (!source.isPlaying)
             {
                 return source;
-
             }
-
-
         }
         return sources[0];
     }

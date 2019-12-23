@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class PathFinding : MonoBehaviour
 {
-    public delegate float CostFunction(float distance, float cost, float crowFliesDistance, int steps);
+    public delegate float CostFunction(float distance, float cost, float crowFliesDistance, int steps, int turns);
 
-    public static float StandardCostFunction(float distance, float cost, float crowFliesDistance, int steps)
+    public static float StandardCostFunction(float distance, float cost, float crowFliesDistance, int steps, int turns)
     {
-        return distance + cost + crowFliesDistance;
+        return distance + cost + crowFliesDistance + turns;
     }
 
-    public static float NoAdditionalsCostFunction(float distance, float cost, float crowFliesDistance, int steps)
+    public static float NoAdditionalsCostFunction(float distance, float cost, float crowFliesDistance, int steps, int turns)
     {
         return distance + crowFliesDistance;
     }
@@ -35,6 +35,7 @@ public class PathFinding : MonoBehaviour
         public float Cost { get; private set; }
         public float CrowFliesDistance { get; private set; }
         public int Steps { get; private set; }
+        public int Turns { get; private set; }
         public Node Start => Nodes != null && Nodes.Count > 0 ? Nodes[0] : null;
         public Node End => Nodes != null && Nodes.Count > 0 ? Nodes[Nodes.Count - 1] : null;
 
@@ -47,9 +48,10 @@ public class PathFinding : MonoBehaviour
             Cost = 0;
             CrowFliesDistance = 0;
             Steps = 0;
+            Turns = 0;
             Debug.LogWarning("Path Result: " + result);
         }
-        public Path(List<Node> nodes, float pathDistance, float pathCrowFliesDistance, float pathCost, int pathSteps)
+        public Path(List<Node> nodes, float pathDistance, float pathCrowFliesDistance, float pathCost, int pathSteps, int pathTurns)
         {
             Result = PathResult.Success;
             FoundPath = true;
@@ -58,6 +60,7 @@ public class PathFinding : MonoBehaviour
             CrowFliesDistance = pathCrowFliesDistance;
             Cost = pathCost;
             Steps = pathSteps;
+            Turns = pathTurns;
         }
 
         public Path(Path path)
@@ -69,11 +72,30 @@ public class PathFinding : MonoBehaviour
             Cost = path.Cost;
             CrowFliesDistance = path.CrowFliesDistance;
             Steps = path.Steps;
+            Turns = path.Turns;
         }
 
         public float TotalCost(CostFunction function)
         {
-            return function(Distance, Cost, CrowFliesDistance, Steps);
+            return function(Distance, Cost, CrowFliesDistance, Steps, Turns);
+        }
+    
+        public void SetRendererPoints(LineRenderer renderer)
+        {
+            if (Nodes == null)
+            {
+                renderer.SetPositions(new Vector3[0]);
+            }
+            else
+            {
+                int length = Nodes.Count;
+                renderer.positionCount = length;
+                for (int i = 0; i < length; i++)
+                {
+                    Vector2Int nodePos = Nodes[i].pos;
+                    renderer.SetPosition(i, new Vector3(nodePos.x + 0.5f, 0.05f, nodePos.y + 0.5f));
+                }
+            }
         }
     }
 
@@ -148,11 +170,11 @@ public class PathFinding : MonoBehaviour
                 if (currentNode == null)
                 {
                     currentNode = node;
-                    currentCost = costFunction(currentNode.pathDistance, currentNode.pathCost, currentNode.pathCrowFliesDistance, currentNode.pathSteps);
+                    currentCost = costFunction(currentNode.pathDistance, currentNode.pathCost, currentNode.pathCrowFliesDistance, currentNode.pathSteps, currentNode.pathTurns);
                 }
                 else
                 {
-                    float nodeCost = costFunction(node.pathDistance, node.pathCost, node.pathCrowFliesDistance, node.pathSteps);
+                    float nodeCost = costFunction(node.pathDistance, node.pathCost, node.pathCrowFliesDistance, node.pathSteps, node.pathTurns);
                     if (nodeCost < currentCost)
                     {
                         currentCost = nodeCost;
@@ -206,6 +228,8 @@ public class PathFinding : MonoBehaviour
                     neighbour.pathCost = currentNode.pathCost + neighbour.Cost;// + GetWallCost(currentNode.pos.x, currentNode.pos.y, i);
                     neighbour.pathSteps = currentNode.pathSteps + 1;
                     neighbour.pathParent = currentNode;
+                    neighbour.pathTurns = currentNode.pathTurns + (currentNode.pathEndDirection == i ? 0 : 1);
+                    neighbour.pathEndDirection = i;
                     open.Add(neighbour);
                     if (!visited.Contains(neighbour))
                         visited.Add(neighbour);
@@ -227,7 +251,7 @@ public class PathFinding : MonoBehaviour
         //nodes.Add(start);
         //so is this.
 
-        Path result = new Path(nodes, end.pathDistance, end.pathCrowFliesDistance, end.pathCost, end.pathSteps);
+        Path result = new Path(nodes, end.pathDistance, end.pathCrowFliesDistance, end.pathCost, end.pathSteps, end.pathTurns);
 
         foreach (Node p in visited)
             p.ClearPathFindingData();

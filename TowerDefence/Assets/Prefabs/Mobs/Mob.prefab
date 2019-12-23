@@ -160,6 +160,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   life: 10
   minimumRigidbodyVelocity: 3
+  updatePathInterval: 0.1
+  updatePathMinimumDistanceSquared: 0.2
 --- !u!195 &2097166228200340716
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -171,9 +173,9 @@ NavMeshAgent:
   m_AgentTypeID: 0
   m_Radius: 0.2115
   m_Speed: 3.5
-  m_Acceleration: 8
+  m_Acceleration: 10
   avoidancePriority: 50
-  m_AngularSpeed: 120
+  m_AngularSpeed: 270
   m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1

@@ -35,7 +35,7 @@ public class Catalogue : MonoBehaviour
 
     public Structure PlaceStructurePrefab { get; set; }
 
-    public void FixedUpdate()
+    public void Update()
     {
         if (!EventSystem.current.IsPointerOverGameObject() && Input.GetMouseButtonDown(0) && Map.Instance.MouseNode != null)
         {
@@ -54,7 +54,14 @@ public class Catalogue : MonoBehaviour
             direction %= 360;
             direction /= 90;
 
-            placing.Rotation = Mathf.FloorToInt(direction);
+            int rotation = Mathf.FloorToInt(direction);
+
+            if (placing.Rotation != rotation)
+            {
+                placing.Rotation = rotation;
+                Map.Instance.DeclareMapChanged();
+            }
+
         }
 
         if (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0))
@@ -63,6 +70,7 @@ public class Catalogue : MonoBehaviour
             {
                 placing.placed = true;
                 placing.OnPlace();
+                Map.Instance.DeclareMapChanged();
             }
             placing = null;
         }

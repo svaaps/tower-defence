@@ -45,7 +45,9 @@ public class AudioManager : MonoBehaviour
         if (dic.TryGetValue(name, out Sound sound))
         {
             sound.RandomizePitch();
-            sound.ReadySource().PlayDelayed(delay);
+            AudioSource source = sound.ReadySource();
+            source.pitch = sound.RandomizePitch();
+            source.PlayDelayed(delay);
         };
     }
 

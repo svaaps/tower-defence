@@ -148,7 +148,7 @@ GameObject:
   - component: {fileID: 2258167317634239352}
   - component: {fileID: 4145502841753003775}
   m_Layer: 11
-  m_Name: Tower 1
+  m_Name: TowerOrange
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -199,7 +199,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 3761401048581705549, guid: f894b064da65c834f9ceea4fff741815,
     type: 3}
   fireInterval: 4
-  range: 12
+  range: 4
 --- !u!65 &4145502841753003775
 BoxCollider:
   m_ObjectHideFlags: 0

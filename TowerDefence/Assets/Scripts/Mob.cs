@@ -20,6 +20,13 @@ public class Mob : MonoBehaviour
     [SerializeField]
     private float minimumRigidbodyVelocity = 2;
 
+    [SerializeField]
+    private float updatePathInterval = 0.1f;
+
+    [SerializeField]
+    private float updatePathMinimumDistanceSquared = 0.5f;
+
+
     private Cubes cubes;
 
     public void Awake()
@@ -50,19 +57,12 @@ public class Mob : MonoBehaviour
             //rb.velocity = Vector3.zero;
             agent.enabled = true;
 
-            float setDestinationInterval = 1f;
-            float minimumDestinationDistanceSq = 0.1f;
-
-            if (setDestinationCounter >= setDestinationInterval && Map.Instance.NearestBlock(transform.position, out nearestBlock))
+            if (setDestinationCounter >= updatePathInterval && Map.Instance.NearestBlock(transform.position, out nearestBlock))
             {
-                if (!agent.hasPath || Map.SquareDistance(nearestBlock.transform.position, agent.destination) > minimumDestinationDistanceSq)
+                if (!agent.hasPath || Map.SquareDistance(nearestBlock.transform.position, agent.destination) > updatePathMinimumDistanceSquared)
                 {
                     agent.SetDestination(nearestBlock.transform.position);
                     setDestinationCounter = 0;
-                }
-                else
-                {
-                    agent.ResetPath();
                 }
             }
         }

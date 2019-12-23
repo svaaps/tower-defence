@@ -17,7 +17,7 @@ public class Node : MonoBehaviour
     [HideInInspector]
     public float pathDistance, pathCost, pathCrowFliesDistance;
     [HideInInspector]
-    public int pathSteps;
+    public int pathSteps, pathTurns, pathEndDirection;
     [HideInInspector]
     public Node pathParent;
 
@@ -32,6 +32,8 @@ public class Node : MonoBehaviour
         pathCost = 0;
         pathCrowFliesDistance = 0;
         pathSteps = 0;
+        pathTurns = 0;
+        pathEndDirection = 0;
     }
 
     public void Init(int x, int y)

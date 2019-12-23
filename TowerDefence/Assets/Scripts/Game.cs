@@ -113,9 +113,6 @@ public class Game : MonoBehaviour
     private void Play()
     {
         Time.timeScale = 1;
-
-        for (int i = 0; i < 50; i++)
-            AddMob(mobPrefab, new Vector3(Random.Range(0, Map.Instance.Size.x), 0, Random.Range(0, Map.Instance.Size.y)));
     }
 
     private void Pause()
@@ -148,7 +145,7 @@ public class Game : MonoBehaviour
 
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
         if (GameState == State.Play)
         {
@@ -231,6 +228,8 @@ public class Game : MonoBehaviour
 
     public void AddMob(Mob prefab, Vector3 position)
     {
+        if (prefab == null)
+            return;
         mobs.Add(Instantiate(prefab, position, Quaternion.identity));
     }
 

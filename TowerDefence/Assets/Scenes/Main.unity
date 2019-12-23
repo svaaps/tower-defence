@@ -1359,7 +1359,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0.35355338, y: 0.35355338, z: -0.1464466, w: 0.8535535}
-  m_LocalPosition: {x: -2, y: 14.142137, z: -2}
+  m_LocalPosition: {x: 6, y: 14.142137, z: 6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1905,14 +1905,69 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sounds:
-  - name: 
+  - name: Death
     bpm: 0
     loopStart: 0
     loopEnd: 0
-    clip: {fileID: 0}
-    volume: 0
-    pitch: 0
-    source: {fileID: 0}
+    clip: {fileID: 8300000, guid: 24a5afa87951a5e478451262e62a2ad0, type: 3}
+    volume: 0.75
+    pitch: 1
+    sources: []
+    instances: 10
+    pitchDistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: -0.00011077151
+        value: -0.006011009
+        inSlope: 1.0073036
+        outSlope: 1.0073036
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1.0007324
+        value: 1.002142
+        inSlope: 1.0073036
+        outSlope: 1.0073036
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - name: Explosion
+    bpm: 0
+    loopStart: 0
+    loopEnd: 0
+    clip: {fileID: 8300000, guid: d425c672d7559be46966379b75430d0b, type: 3}
+    volume: 0.17
+    pitch: 1
+    sources: []
+    instances: 1
+    pitchDistribution:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - name: Fire
+    bpm: 0
+    loopStart: 0
+    loopEnd: 0
+    clip: {fileID: 8300000, guid: 7374541039f05b74fa16a3f9d974bdd4, type: 3}
+    volume: 0.19
+    pitch: 1
+    sources: []
+    instances: 1
+    pitchDistribution:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
 --- !u!4 &1375718705
 Transform:
   m_ObjectHideFlags: 0

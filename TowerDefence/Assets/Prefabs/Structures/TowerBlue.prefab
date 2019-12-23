@@ -148,7 +148,7 @@ GameObject:
   - component: {fileID: 2293182688855539171}
   - component: {fileID: 4107936423569264740}
   m_Layer: 11
-  m_Name: Tower
+  m_Name: TowerBlue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -199,7 +199,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 3907146833611541612, guid: dad7120ed111c0e449d517f22943e676,
     type: 3}
   fireInterval: 4
-  range: 12
+  range: 5
 --- !u!65 &4107936423569264740
 BoxCollider:
   m_ObjectHideFlags: 0

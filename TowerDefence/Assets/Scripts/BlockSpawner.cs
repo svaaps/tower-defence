@@ -20,9 +20,12 @@ public class BlockSpawner : Structure
 
     private PathFinding.Path path;
 
+    private LineMeshGenerator pathLineMesh;
+
     public void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
+        pathLineMesh = GetComponentInChildren<LineMeshGenerator>();
     }
 
     public override void OnPlace()
@@ -43,12 +46,15 @@ public class BlockSpawner : Structure
 
     public void RecalculatePath()
     {
+        if (!placed)
+            return;
         Map.Instance.NearestBlockGoal(node, out _, out path);
+        pathLineMesh.SetPoints(path);
     }
 
     public void SetColor(Color color)
     {
-        rend.material.SetColor("_EmissionColor", color);
+        //rend.material.SetColor("_EmissionColor", color);
     }
 
     private void FillQueue()

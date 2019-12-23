@@ -45,7 +45,7 @@ public class Block : MonoBehaviour
     {
         Renderer rend = GetComponentInChildren<Renderer>();
         Color color = Color;
-        rend.material.SetColor("_EmissionColor", color * 2);
+        //rend.material.SetColor("_EmissionColor", color * 2);
     }
 
     public void Init(int x, int y)
