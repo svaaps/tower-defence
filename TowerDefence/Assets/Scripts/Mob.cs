@@ -91,5 +91,6 @@ public class Mob : MonoBehaviour
     {
         Game.Instance.RemoveMob(this);
         cubes.Explode();
+        AudioManager.Instance.PlayWithRandomPitch("Death", Random.value * .25f);
     }
 }

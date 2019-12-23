@@ -157,8 +157,10 @@ public class Game : MonoBehaviour
             {
                 counter -= tickInterval;
                 Map.Instance.Tick();
+                AudioManager.Instance.Tick();
             }
             Map.Instance.InterTick(counter / tickInterval);
+            AudioManager.Instance.InterTick(counter / tickInterval);
         }
 
         else if (GameState == State.Build)

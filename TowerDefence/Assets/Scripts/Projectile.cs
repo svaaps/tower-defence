@@ -73,6 +73,8 @@ public class Projectile : MonoBehaviour
         Game.Instance.AddDamage(transform.position, explosionDamage, explosionRange);
         if (explosionParticleSystem)
             Instantiate(explosionParticleSystem, transform.position, Quaternion.identity);
+
+        AudioManager.Instance.Play("Explosion");
     }
 
     public bool Fire(Vector3 target)

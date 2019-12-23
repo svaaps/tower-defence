@@ -82,6 +82,8 @@ public class BlockSpawner : Structure
         {
             block.Path = new PathFinding.Path(path);
             queue.RemoveAt(0);
+
+            OnSpawn(block);
         }
         else
         {
@@ -105,4 +107,10 @@ public class BlockSpawner : Structure
             SetColor(queue[0].Color * 3);
         }
     }
+
+    public virtual void OnSpawn(Block block)
+    {
+        AudioManager.Instance.Play("SpawnBlock");
+    }
+
 }

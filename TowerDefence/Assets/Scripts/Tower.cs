@@ -52,5 +52,17 @@ public class Tower : Structure
         Projectile projectile = Instantiate(projectilePrefab, projectileStart.position, projectileStart.rotation);
         if (!projectile.Fire(position))
             Destroy(projectile.gameObject);
+        else
+        {
+
+            OnFire();
+        }
+
+   
+   
+    }
+    public void OnFire()
+    {
+        AudioManager.Instance.Play("Fire");
     }
 }
