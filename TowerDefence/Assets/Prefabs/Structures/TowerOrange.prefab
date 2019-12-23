@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 6118273651445440677}
   - component: {fileID: 2258167317634239352}
   - component: {fileID: 4145502841753003775}
+  - component: {fileID: 7025765101749483117}
   m_Layer: 11
   m_Name: TowerOrange
   m_TagString: Untagged
@@ -182,11 +183,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db98edbf4f486c14b9142490315ac323, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  life: 0
   cost: 10
   canBeBuiltOver: 0
   isRemovable: 1
   isObstacle: 1
   isImpassable: 1
+  isInvincible: 0
   northExitBlocked: 0
   eastExitBlocked: 0
   southExitBlocked: 0
@@ -194,7 +197,7 @@ MonoBehaviour:
   height: 2
   placed: 0
   thumbnail: {fileID: 0}
-  node: {fileID: 0}
+  tile: {fileID: 0}
   projectileStart: {fileID: 6479496266223467509}
   projectilePrefab: {fileID: 3761401048581705549, guid: f894b064da65c834f9ceea4fff741815,
     type: 3}
@@ -213,3 +216,19 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 2, z: 1}
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!208 &7025765101749483117
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982284596265295504}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.5, y: 1, z: 0.5}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 1, z: 0}
+  m_TimeToStationary: 0.5
