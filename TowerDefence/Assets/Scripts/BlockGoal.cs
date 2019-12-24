@@ -13,6 +13,7 @@ public class BlockGoal : Structure
             Destroy(sinkingBlock.gameObject);
             sinkingBlock = null;
             sunk = false;
+            OnBlockSunk();
         }
 
         if (tile.block != null && sinkingBlock == null)
@@ -29,5 +30,10 @@ public class BlockGoal : Structure
             sinkingBlock.transform.position = Vector3.Lerp(transform.position, transform.position - new Vector3(0, 1, 0), t);
             sunk = true;
         }
+    }
+
+    public void OnBlockSunk()
+    {
+
     }
 }

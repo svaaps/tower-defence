@@ -138,4 +138,13 @@ public class Node : MonoBehaviour
     {
 
     }
+
+    public virtual void OnDrawGizmosSelected()
+    {
+        Vector3 half = new Vector3(0.5f, 0, 0.5f);
+
+        Gizmos.DrawSphere(transform.position, 0.1f);
+        foreach (Node n in neighbours)
+            if (n) Gizmos.DrawLine(transform.position + half, n.transform.position + half);
+    }
 }

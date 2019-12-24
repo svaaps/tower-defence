@@ -31,6 +31,7 @@ public class Structure : MonoBehaviour
 
     public bool ExitBlocked(int direction)
     {
+        direction /= 2;
         direction -= rotation;
         direction %= 4;
         direction += 4;

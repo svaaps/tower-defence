@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class PathFinding : MonoBehaviour
@@ -51,6 +50,7 @@ public class PathFinding : MonoBehaviour
             Turns = 0;
             Debug.LogWarning("Path Result: " + result);
         }
+
         public Path(List<Node> nodes, float pathDistance, float pathCrowFliesDistance, float pathCost, int pathSteps, int pathTurns)
         {
             Result = PathResult.Success;
@@ -61,6 +61,7 @@ public class PathFinding : MonoBehaviour
             Cost = pathCost;
             Steps = pathSteps;
             Turns = pathTurns;
+            Debug.Log(TotalCost(StandardCostFunction) + " (" + pathTurns + ")");
         }
 
         public Path(Path path)
@@ -99,7 +100,6 @@ public class PathFinding : MonoBehaviour
         }
     }
 
-    
     public static float Distance(Node n1, Node n2)
     {
         return Distance(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y);
@@ -109,10 +109,13 @@ public class PathFinding : MonoBehaviour
     {
         return Mathf.Sqrt(SquareDistance(x1, y1, x2, y2));
     }
+
     public static float SquareDistance(float x1, float y1, float x2, float y2)
     {
         return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
     }
+
+    public static readonly float ROOT_2 = Mathf.Sqrt(2);
 
     public static Path PathFind(Node start, Node end, float maxDistance, int maxTries, CostFunction costFunction)
     {
@@ -139,6 +142,7 @@ public class PathFinding : MonoBehaviour
         start.pathCrowFliesDistance = d;
 
         open.Add(start);
+        visited.Add(start);
 
         int tries = 0;
         while (true)
@@ -206,16 +210,24 @@ public class PathFinding : MonoBehaviour
 
                 if (neighbour == null) 
                     continue;
+
                 if (neighbour.IsImpassable()) 
                     continue;
-                if (currentNode.ExitBlocked(i / 2))
+
+                if (currentNode.ExitBlocked(i))
                     continue;
 
-                float distance = 1;//i % 2 == 0 ? 1 : ROOT_2;//currentNode.distances[i];
+                float distance = i % 2 == 0 ? 1 : ROOT_2;
 
-                float nextG = currentNode.pathDistance + distance;
+                float nextPathDistance = currentNode.pathDistance + distance;
+                float nextPathCrowFliesDistance = Distance(neighbour, end);
+                float nextPathCost = currentNode.pathCost + neighbour.Cost();// + GetWallCost(currentNode.pos.x, currentNode.pos.y, i);
+                int nextPathSteps = currentNode.pathSteps + 1;
+                int nextPathTurns = currentNode.pathTurns + ((currentNode.pathSteps == 0 || currentNode.pathEndDirection == i) ? 0 : 1);
 
-                if (nextG < neighbour.pathDistance)
+                float nextTotalCost = costFunction(nextPathDistance, nextPathCost, nextPathCrowFliesDistance, nextPathSteps, nextPathTurns);
+                
+                if (nextTotalCost < costFunction(neighbour.pathDistance, neighbour.pathCost, neighbour.pathCrowFliesDistance, neighbour.pathSteps, neighbour.pathTurns))
                 {
                     open.Remove(neighbour);
                     closed.Remove(neighbour);
@@ -223,13 +235,15 @@ public class PathFinding : MonoBehaviour
 
                 if (!open.Contains(neighbour) && !closed.Contains(neighbour))
                 {
-                    neighbour.pathDistance = nextG;
-                    neighbour.pathCrowFliesDistance = Distance(neighbour, end);
-                    neighbour.pathCost = currentNode.pathCost + neighbour.Cost();// + GetWallCost(currentNode.pos.x, currentNode.pos.y, i);
-                    neighbour.pathSteps = currentNode.pathSteps + 1;
+                    neighbour.pathDistance = nextPathDistance;
+                    neighbour.pathCrowFliesDistance = nextPathCrowFliesDistance;
+                    neighbour.pathCost = nextPathCost;
+                    neighbour.pathSteps = nextPathSteps;
+                    neighbour.pathTurns = nextPathTurns;
+
                     neighbour.pathParent = currentNode;
-                    neighbour.pathTurns = currentNode.pathTurns + (currentNode.pathEndDirection == i ? 0 : 1);
                     neighbour.pathEndDirection = i;
+
                     open.Add(neighbour);
                     if (!visited.Contains(neighbour))
                         visited.Add(neighbour);
@@ -242,9 +256,8 @@ public class PathFinding : MonoBehaviour
         while (current.pathParent != null)
         {
             nodes.Insert(0, current);
-            //           nodes.Add(current);
+            //nodes.Add(current);
             //this is backwards.
-
             current = current.pathParent;
         }
         nodes.Insert(0, start);
