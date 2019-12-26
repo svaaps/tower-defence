@@ -3,23 +3,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class Node : MonoBehaviour
+public class Node
 {
-    [HideInInspector]
-    public Vector2Int pos;
+    public float x, y;
+
     [HideInInspector]
     public Node[] neighbours;
+
     [HideInInspector]
     public float pathDistance, pathCost, pathCrowFliesDistance;
+
     [HideInInspector]
     public int pathSteps, pathTurns, pathEndDirection;
+
     [HideInInspector]
     public Node pathParent;
 
     public virtual float Cost() => 0;
     public virtual bool IsImpassable() => false;
     public virtual bool ExitBlocked(int direction) => false;
+    public virtual float Distance(Node node) => Distance(x, y, node.x, node.y);
+    public static float Distance(float x1, float y1, float x2, float y2) => Mathf.Sqrt(SquareDistance(x1, y1, x2, y2));
+    public static float SquareDistance(float x1, float y1, float x2, float y2) => (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+
+    public int IntX => (int)x;
+    public int IntY => (int)y;
 
     public void ClearPathFindingData()
     {
@@ -32,10 +40,10 @@ public class Node : MonoBehaviour
         pathEndDirection = 0;
     }
 
-    public void Init(int x, int y)
+    public Node(float x, float y)
     {
-        pos = new Vector2Int(x, y);
-        transform.localPosition = new Vector3(x, 0, y);
+        this.x = x;
+        this.y = y;
         neighbours = new Node[8];
     }
 
@@ -134,17 +142,13 @@ public class Node : MonoBehaviour
         }
     }
 
-    public void Tick()
-    {
-
-    }
-
     public virtual void OnDrawGizmosSelected()
     {
-        Vector3 half = new Vector3(0.5f, 0, 0.5f);
+        Vector3 position = new Vector3(x, 0, y);
 
-        Gizmos.DrawSphere(transform.position, 0.1f);
+        Gizmos.DrawSphere(position, 0.1f);
         foreach (Node n in neighbours)
-            if (n) Gizmos.DrawLine(transform.position + half, n.transform.position + half);
+            if (n != null)
+                Gizmos.DrawLine(position, new Vector3(n.x, 0, n.y));
     }
 }

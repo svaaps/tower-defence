@@ -157,8 +157,7 @@ MonoBehaviour:
   height: 1
   placed: 0
   thumbnail: {fileID: 0}
-  tile: {fileID: 0}
-  spawnInterval: 4
+  spawnInterval: 1
   spawnLoop: 1
   spawnQueue:
   - {fileID: 6206721299358694619, guid: 2756677c1a285dd47aa7ee7eebede9f5, type: 3}

@@ -83,7 +83,7 @@ public class Structure : MonoBehaviour
         {
             dead = true;
             OnDeath();
-            Map.Instance.DeleteStructure(tile.pos.x, tile.pos.y, true);
+            Map.Instance.DeleteStructure(tile.IntX, tile.IntY, true);
         }
     }
 }

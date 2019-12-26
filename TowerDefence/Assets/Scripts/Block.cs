@@ -99,8 +99,8 @@ public class Block : MonoBehaviour
         if (next.block != null)
             return;
 
-        prevX = Current.pos.x;
-        prevY = Current.pos.y;
+        prevX = Current.IntX;
+        prevY = Current.IntY;
 
         transform.position = new Vector3(prevX + 0.5f, 0, prevY + 0.5f);
 

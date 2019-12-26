@@ -61,7 +61,6 @@ public class PathFinding : MonoBehaviour
             Cost = pathCost;
             Steps = pathSteps;
             Turns = pathTurns;
-            Debug.Log(TotalCost(StandardCostFunction) + " (" + pathTurns + ")");
         }
 
         public Path(Path path)
@@ -93,8 +92,7 @@ public class PathFinding : MonoBehaviour
                 renderer.positionCount = length;
                 for (int i = 0; i < length; i++)
                 {
-                    Vector2Int nodePos = Nodes[i].pos;
-                    renderer.SetPosition(i, new Vector3(nodePos.x + 0.5f, 0.05f, nodePos.y + 0.5f));
+                    renderer.SetPosition(i, new Vector3(Nodes[i].x + 0.5f, 0.05f, Nodes[i].y + 0.5f));
                 }
             }
         }
@@ -102,7 +100,7 @@ public class PathFinding : MonoBehaviour
 
     public static float Distance(Node n1, Node n2)
     {
-        return Distance(n1.pos.x, n1.pos.y, n2.pos.x, n2.pos.y);
+        return Distance(n1.x, n1.y, n2.x, n2.y);
     }
 
     public static float Distance(float x1, float y1, float x2, float y2)
@@ -129,7 +127,7 @@ public class PathFinding : MonoBehaviour
         if (start == end)
             return new Path(PathResult.AtDestination);
 
-        float d = Distance(start.pos.x, start.pos.y, end.pos.x, end.pos.y);
+        float d = Distance(start.x, start.y, end.x, end.y);
 
         if (d > maxDistance)
             return new Path(PathResult.FailureTooFar);
@@ -279,12 +277,12 @@ public class PathFinding : MonoBehaviour
         if (start != null)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(new Vector3(start.pos.x + 0.5f, 0, start.pos.y + 0.5f), 0.1f);
+            Gizmos.DrawSphere(new Vector3(start.x + 0.5f, 0, start.y + 0.5f), 0.1f);
         }
         if (end != null)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(new Vector3(end.pos.x + 0.5f, 0, end.pos.y + 0.5f), 0.1f);
+            Gizmos.DrawSphere(new Vector3(end.x + 0.5f, 0, end.y + 0.5f), 0.1f);
         }
 
         if (path.FoundPath)
@@ -294,7 +292,7 @@ public class PathFinding : MonoBehaviour
             {
                 Node n0 = path.Nodes[i];
                 Node n1 = path.Nodes[i + 1];
-                Gizmos.DrawLine(new Vector3(n0.pos.x + 0.5f, 0, n0.pos.y + 0.5f), new Vector3(n1.pos.x + 0.5f, 0, n1.pos.y + 0.5f));
+                Gizmos.DrawLine(new Vector3(n0.x + 0.5f, 0, n0.y + 0.5f), new Vector3(n1.x + 0.5f, 0, n1.y + 0.5f));
             }
         }
     }

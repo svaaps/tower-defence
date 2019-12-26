@@ -10,8 +10,8 @@ public class Map : MonoBehaviour
     private static Map instance;
     public static Map Instance => instance;
 
-    public static float PATHFINDING_MAX_DISTANCE = 100;
-    public static int PATHFINDING_MAX_TRIES = 1000;
+    public static readonly float PATHFINDING_MAX_DISTANCE = 100;
+    public static readonly int PATHFINDING_MAX_TRIES = 1000;
 
     private Wall[,] verticalWalls;
     private Wall[,] horizontalWalls;
@@ -21,10 +21,11 @@ public class Map : MonoBehaviour
     private Vector2Int size;
 
     [SerializeField]
-    private Tile tilePrefab;
+    private GameObject floorPlanePrefab;
+
 
     [SerializeField]
-    private Transform blockContainer;
+    private Transform blockContainer, structureContainer;
 
     private Camera cam;
     public Vector3 MousePlane { get; private set; }
@@ -46,6 +47,13 @@ public class Map : MonoBehaviour
         MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
         MouseCoord = new Vector2Int(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
         MouseTile = GetTile(MouseCoord.x, MouseCoord.y);
+    }
+
+    private void InitArrays()
+    {
+        verticalWalls = new Wall[size.x + 1, size.y];
+        horizontalWalls = new Wall[size.x, size.y + 1];
+        tiles = new Tile[size.x, size.y];
     }
 
     public void DeclareMapChanged()
@@ -161,7 +169,7 @@ public class Map : MonoBehaviour
                 continue;
 
             //node.block.angle = t * 90 - node.block.angle;
-            Vector3 lerp = Vector3.Lerp(new Vector3(tile.block.prevX + 0.5f, 0, tile.block.prevY + 0.5f), new Vector3(tile.pos.x + 0.5f, 0, tile.pos.y + 0.5f), t);
+            Vector3 lerp = Vector3.Lerp(new Vector3(tile.block.prevX + 0.5f, 0, tile.block.prevY + 0.5f), new Vector3(tile.x + 0.5f, 0, tile.y + 0.5f), t);
             tile.block.transform.position = lerp;
         }
     }
@@ -209,7 +217,7 @@ public class Map : MonoBehaviour
                 continue;
             if (!(tile.structure is T))
                 continue;
-            float d = SquareDistance(position, new Vector3(tile.pos.x + 0.5f, 0, tile.pos.y + 0.5f));
+            float d = SquareDistance(position, new Vector3(tile.x + 0.5f, 0, tile.y + 0.5f));
             if (nearest == null || sqDistance > d)
             {
                 nearest = tile.structure as T;
@@ -229,7 +237,7 @@ public class Map : MonoBehaviour
                 continue;
             if (!(tile.structure is BlockGoal))
                 continue;
-            float d = SquareDistance(position, new Vector3(tile.pos.x + 0.5f, 0, tile.pos.y + 0.5f));
+            float d = SquareDistance(position, new Vector3(tile.x + 0.5f, 0, tile.y + 0.5f));
             if (nearest == null || sqDistance > d)
             {
                 nearest = tile.structure as BlockGoal;
@@ -294,7 +302,7 @@ public class Map : MonoBehaviour
         if (block == null)
             return false;
 
-        if (block.Current)
+        if (block.Current != null)
             block.Current.block = null;
         
         Destroy(block.gameObject);
@@ -344,12 +352,7 @@ public class Map : MonoBehaviour
         return get == null ? 0 : get.cost;
     }
 
-    private void InitArrays()
-    {
-        verticalWalls = new Wall[size.x + 1, size.y];
-        horizontalWalls= new Wall[size.x, size.y + 1];
-        tiles = new Tile[size.x, size.y];
-    }
+    
 
     [ContextMenu("Clear")]
     public void Clear()
@@ -377,8 +380,7 @@ public class Map : MonoBehaviour
             for (int y = 0; y < tiles.GetLength(1); y++)
                 for (int x = 0; x < tiles.GetLength(0); x++)
                 {
-                    if (tiles[x, y] != null)
-                        DestroyImmediate(tiles[x, y].gameObject);
+                    tiles[x, y] = null;
                 }
         }
 
@@ -419,18 +421,18 @@ public class Map : MonoBehaviour
     public void Generate()
     {
         Clear();
+        CreateNodes();
+        CreateFloorPlane();
+        BakeNavMesh();
+        CenterCamera();
+    }
 
+    private void CreateNodes()
+    {
         for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
-
-#if UNITY_EDITOR
-                tiles[x, y] = PrefabUtility.InstantiatePrefab(tilePrefab, transform) as Tile;
-#else
-                nodes[x, y] = Object.Instantiate(emptyNodePrefab, transform);
-#endif
-
-                tiles[x, y].Init(x, y);
+                tiles[x, y] = new Tile(x, y);
             }
 
         for (int y = 0; y < size.y; y++)
@@ -440,14 +442,22 @@ public class Map : MonoBehaviour
                 Tile n = GetTile(x, y + 1);
                 Tile e = GetTile(x + 1, y);
 
-                if (t) t.NorthNeighbour = n;
-                if (n) n.SouthNeighbour = t;
-                if (t) t.EastNeighbour = e;
-                if (e) e.WestNeighbour = t;
+                if (t != null) t.NorthNeighbour = n;
+                if (n != null) n.SouthNeighbour = t;
+                if (t != null) t.EastNeighbour = e;
+                if (e != null) e.WestNeighbour = t;
             }
+    }
 
-        BakeNavMesh();
-        CenterCamera();
+    private void CreateFloorPlane()
+    {
+#if UNITY_EDITOR
+        GameObject obj = PrefabUtility.InstantiatePrefab(floorPlanePrefab, transform) as GameObject;
+        obj.transform.localScale = new Vector3(size.x, 1, size.y);
+#else
+                GameObject obj = Object.Instantiate(floorPlanePrefab, transform);
+        obj.transform.localScale = new Vector3(size.x, 1, size.y);
+#endif
     }
 
     public bool PlaceStructure(Structure prefab, int x, int y, int rotation, out Structure structure, bool sudo = false)
@@ -472,9 +482,10 @@ public class Map : MonoBehaviour
         if (prefab == null)
             return true;
 
-        structure = Instantiate(prefab, tiles[x, y].transform);
+        structure = Instantiate(prefab, structureContainer);
         structure.tile = tiles[x, y];
-        structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
+        structure.transform.position = new Vector3(x + 0.5f, 0, y + 0.5f);
+        //structure.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
         structure.Rotation = rotation;
         tiles[x, y].structure = structure;
         DeclareMapChanged();

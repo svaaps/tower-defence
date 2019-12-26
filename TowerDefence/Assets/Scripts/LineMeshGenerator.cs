@@ -45,7 +45,7 @@ public class LineMeshGenerator : MonoBehaviour
         points = new Vector2[path.Nodes.Count];
         for (int i = 0; i < points.Length; i++)
         {
-            points[i] = path.Nodes[i].pos;
+            points[i] = new Vector2(path.Nodes[i].x, path.Nodes[i].y);
         }
         GenerateMesh();
     }

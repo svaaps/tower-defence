@@ -39,13 +39,13 @@ public class Catalogue : MonoBehaviour
     {
         if (!EventSystem.current.IsPointerOverGameObject() && Input.GetMouseButtonDown(0) && Map.Instance.MouseTile != null)
         {
-            Map.Instance.PlaceStructure(PlaceStructurePrefab, Map.Instance.MouseTile.pos.x, Map.Instance.MouseTile.pos.y, 0, out placing);
+            Map.Instance.PlaceStructure(PlaceStructurePrefab, Map.Instance.MouseTile.IntX, Map.Instance.MouseTile.IntY, 0, out placing);
             return;
         }
 
         if (placing != null && placing.tile != Map.Instance.MouseTile)
         {
-            float direction = -Mathf.Atan2(placing.tile.pos.y - Map.Instance.MouseCoord.y, placing.tile.pos.x - Map.Instance.MouseCoord.x) * Mathf.Rad2Deg;
+            float direction = -Mathf.Atan2(placing.tile.IntY - Map.Instance.MouseCoord.y, placing.tile.IntX - Map.Instance.MouseCoord.x) * Mathf.Rad2Deg;
 
             direction -= 90;
             direction %= 360;
@@ -87,7 +87,7 @@ public class Catalogue : MonoBehaviour
                     structure = hitInfo.collider.GetComponentInParent<Structure>();
                 if (structure)
                 {
-                    Map.Instance.DeleteStructure(structure.tile.pos.x, structure.tile.pos.y);
+                    Map.Instance.DeleteStructure(structure.tile.IntX, structure.tile.IntY);
                 }
             }
         }
