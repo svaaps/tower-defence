@@ -144,12 +144,16 @@ public class Mob : MonoBehaviour
         //Get the current linear velocity of the mob by getting the magnitude of the 3D velocity vector from the Rigidbody
         float velocity = rb.velocity.magnitude;
 
-        //IF the mob is moving slower than a defined minimum
-        if (velocity < minimumRigidbodyVelocity)
+        //IF the mob is not being controlled by the NavMeshAgent (i.e. was probably being thrown through the air or falling) and is now moving slower than a defined small minimum (as good as stopped)
+        if (!agent.enabled && velocity < minimumRigidbodyVelocity)
         {
-            //Stop moving
+            //Reenable the NavMeshAgent
             agent.enabled = true;
+        }
 
+        //IF the NavMeshAgent is enabled
+        if (agent.enabled)
+        {
             //IF the counter is beyond a defined interval
             if (setDestinationCounter >= updatePathInterval)
             {
@@ -165,7 +169,7 @@ public class Mob : MonoBehaviour
                     {
                         //Reset the set destination counter
                         setDestinationCounter = 0;
-                        
+
                         //Set a new destination for the NavMeshAgent
                         agent.SetDestination(targetBlock.transform.position);
                     }
