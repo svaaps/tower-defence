@@ -44,8 +44,13 @@ public class Map : MonoBehaviour
 
     public void Update()
     {
+        //Calculate what position on the ground plane is under the mouse.
         MousePlane = ScreenPointToRayPlaneIntersection(Input.mousePosition, 0, cam);
+
+        //Calculate what integer coordinate that is.
         MouseCoord = new Vector2Int(Mathf.FloorToInt(MousePlane.x), Mathf.FloorToInt(MousePlane.z));
+
+        //Get a tile that corresponds with that coordinate.
         MouseTile = GetTile(MouseCoord.x, MouseCoord.y);
     }
 
@@ -63,65 +68,102 @@ public class Map : MonoBehaviour
 
     public void Tick()
     {
+        //Checks the flag if a change to the map has been declared, i.e. a structure has been placed or destroyed, and sets it to another variable.
         Changed = changed;
+
+        //Clears the flag, meaning the change is being handled.
         changed = false;
 
+        //Call 'EarlyTick' on all placed structures.
         foreach (Tile tile in tiles)
         {
             if (tile.structure != null && tile.structure.placed)
                 tile.structure.EarlyTick();
         }
+
+        //Call 'Tick' on all placed structures.
         foreach (Tile tile in tiles)
         {
             if (tile.structure != null && tile.structure.placed)
                 tile.structure.Tick();
         }
 
+        //BLOCK UPDATING
+
+        //Declare an empty list for all the blocks on the map.
         List<Block> blocks = new List<Block>();
 
+        //Iterate through all the tiles
         foreach (Tile tile in tiles)
         {
+            //IF the tile has a block on it
             if (tile.block)
             {
+                //Reset all the flags to do with block update/movement
                 tile.block.waiting = false;
                 tile.block.moved = false;
                 tile.block.moving = false;
                 tile.block.updated = false;
+
+                //Add the block to the list.
                 blocks.Add(tile.block);
+
+                //If there was a change to the map, recalculate the block's path.
                 if (Changed)
                     tile.block.RecalculatePath();
             }
         }
 
+        //For 100 tries
         for (int t = 0; t < 100; t++)
         {
+            //Iterate through all the blocks
             foreach(Block block in blocks)
             {
+
+                //If the block has already updated or moved, skip it.
                 if (block.updated || block.moved)
                     continue;
 
+                //If the block has a path, and it's a good'un
                 if (block.Path.FoundPath && block.Path.Nodes.Count > 1)
                 {
-                    Tile tile = block.Path.Nodes[1] as Tile;
+                    //Store the next tile along the block's path in a variable.
+                    Tile nextTile = block.Path.Nodes[1] as Tile;
 
-                    if (!tile.block)
+                    //If the next tile is not occupied by a block
+                    if (!nextTile.block)
                     {
+                        //Then we good, the block can move!
+                        //Flag it moving
                         block.moving = true;
+
+                        //Move the block
                         block.GoToNext();
+
+                        //Flag it updated
                         block.updated = true;
                     }
-                    else if (!tile.block.moved)
+                    //Else if the next tile is occupied by a block BUT that block hasn't moved yet
+                    else if (!nextTile.block.moved)
                     {
+                        //Flag the block waiting, because it's waiting for the next block to move before moving itself.
                         block.waiting = true;
                     }
+                    //Else if the next tile is occupied, and that block has already moved this tick, it must be there to stay. No dice.
                     else
                     {
+                        //Flag it updated.
                         block.updated = true;
+
+                        //But sadly, flag it not moving.
                         block.moving = false;
                     }
                 }
             }
 
+            //Now go through and remove all the blocks from the list that have updated, which ought to leave only those that are waiting for a block in front.
+            //Pro tip: iterating backwards through a list means we can remove items safely as we go, because the indexing doesn't get messed up.
             for (int i = blocks.Count - 1; i >= 0; i--)
             {
                 if (blocks[i].updated)
@@ -129,22 +171,34 @@ public class Map : MonoBehaviour
             }
         }
 
+        //FINALLY!
+        //For all those unlucky blocks that, despite 100 TRIES didn't get an update (because presumably they were in a queue of blocks over 100 long), update the sad bastards.
         foreach (Block block in blocks)
         {
+            //Check probably not necessary, but hey
             if (block.updated || block.moved)
                 continue;
 
+            //If the block has a path, and it's a good'un
             if (block.Path.FoundPath && block.Path.Nodes.Count > 1)
             {
+                //If the next tile along the block's path is a tile and it isn't occupied by a block
                 if (!(block.Path.Nodes[1] as Tile).block)
                 {
+                    //Flag it moving
                     block.moving = true;
+
+                    //Move the block
                     block.GoToNext();
+
+                    //Flag it updated
                     block.updated = true;
                 }
             }
         }
+        //BLOCK UPDATING IS DONE
 
+        //Call 'LateTick' on all placed structures.
         foreach (Tile tile in tiles)
         {
             if (tile.structure != null && tile.structure.placed)
@@ -154,21 +208,32 @@ public class Map : MonoBehaviour
 
     public void InterTick(float t)
     {
-        if (tiles != null)
-        foreach (Tile tile in tiles)
-            if (tile.structure != null && tile.structure.placed)
-                tile.structure.InterTick(t);
+        //InterTick is called all the time, in the interval between ticks.
+        //the float t is the time between the last tick and the next one, scaled to be between 0 and 1.
 
-        if (tiles != null)
+        if (tiles == null)
+            return;
+
+        //Call 'InterTick' on all placed structures
         foreach (Tile tile in tiles)
         {
+            if (tile.structure != null && tile.structure.placed)
+                tile.structure.InterTick(t);
+        }
+
+        //Animate the blocks moving between tiles
+        //Iterate through all the tiles
+        foreach (Tile tile in tiles)
+        {
+            //Skip tiles without a block
             if (!tile.block)
                 continue;
 
+            //Skip tiles where the block aint moving
             if (!tile.block.moving)
                 continue;
 
-            //node.block.angle = t * 90 - node.block.angle;
+            //Calculate the position between the previous tile position and the current tile position, interpolated linearly where 't' is the time between the last tick and the next one, scaled between 0 and 1 
             Vector3 lerp = Vector3.Lerp(new Vector3(tile.block.prevX + 0.5f, 0, tile.block.prevY + 0.5f), new Vector3(tile.x + 0.5f, 0, tile.y + 0.5f), t);
             tile.block.transform.position = lerp;
         }
@@ -313,25 +378,10 @@ public class Map : MonoBehaviour
     public Tile GetTile(int x, int y) => x < 0 || y < 0 || x >= size.x || y >= size.y || tiles == null ? null : tiles[x, y];
     public Wall GetWall(int x, int y, bool vertical) => x < 0 || y < 0 || x >= size.x + 1 || y >= size.y + 1 ? null : vertical ? verticalWalls[x, y] : horizontalWalls[x, y];
 
-    public Wall GetNorthWall(int x, int y)
-    {
-        return GetWall(x, y + 1, false);
-    }
-
-    public Wall GetEastWall(int x, int y)
-    {
-        return GetWall(x + 1, y, true);
-    }
-
-    public Wall GetSouthWall(int x, int y)
-    {
-        return GetWall(x, y, false);
-    }
-
-    public Wall GetWestWall(int x, int y)
-    {
-        return GetWall(x, y, true);
-    }
+    public Wall GetNorthWall(int x, int y) => GetWall(x, y + 1, false);
+    public Wall GetEastWall(int x, int y) => GetWall(x + 1, y, true);
+    public Wall GetSouthWall(int x, int y) => GetWall(x, y, false);
+    public Wall GetWestWall(int x, int y) => GetWall(x, y, true);
 
     public Wall GetWall(int x, int y, int direction)
     {
@@ -351,8 +401,6 @@ public class Map : MonoBehaviour
         Wall get = GetWall(x, y, direction);
         return get == null ? 0 : get.cost;
     }
-
-    
 
     [ContextMenu("Clear")]
     public void Clear()

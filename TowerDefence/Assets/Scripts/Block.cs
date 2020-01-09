@@ -63,9 +63,7 @@ public class Block : MonoBehaviour
 
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.T))
-            Target = Map.Instance.MouseTile;
-
+        //The Block automatically despawns if either it is not on a Tile, or the Block the Tile thinks it ought to have on it is not this...
         if (Current == null || Current.block != this)
         {
             despawnTimer += Time.deltaTime;
@@ -83,32 +81,52 @@ public class Block : MonoBehaviour
 
     public void GoToNext()
     {
+        //This method is called in the tick method and moves the block along its path by removing references to the current tile, and assigning it a new tile which is the next one along the path.
+        //It doesn't actually control the animation of the block between tile positions. 
+
+        //Do nothing if it's flagged not to move
         if (!moving)
             return;
 
+        //Do nothing if it has no path 
         if (!Path.FoundPath)
             return;
 
-        if (Path.Nodes.Count < 2)
+        //Do nothing if the path is only one or zero nodes in length
+        if (Path.Nodes.Count <= 1)
             return;
 
+        //Do nothing if the next path node is (for some unlikely reason) not a Tile or is null
         Tile next = Path.Nodes[1] as Tile;
         if (next == null)
             return;
 
+        //Do nothing if the next path node already has a block on it.
         if (next.block != null)
             return;
 
+
+        //Record the current position and store as integers in prevX and prevY
         prevX = Current.IntX;
         prevY = Current.IntY;
 
+        //Position the block exactly on the current tile (even if it was already)
         transform.position = new Vector3(prevX + 0.5f, 0, prevY + 0.5f);
 
-        moved = true;
+        //Remove the reference to this block from the current tile. Freeing the tile up for other blocks to move onto it.
         Current.block = null;
+
+        //Set the next node along the path as the current one for this block.
         Current = next;
+
+        //Set the block for that node to this one.
         Current.block = this;
+
+        //Remove the first node in the path.
         Path.Nodes.RemoveAt(0);
+
+        //Declare the block moved
+        moved = true;
     }
 
     public virtual void RecalculatePath()
